@@ -1,4 +1,4 @@
-package ToolFunc
+package toolfunc
 
 func StringToInt64(s string) int64 {
 	var num int64 = 0

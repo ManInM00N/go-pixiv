@@ -36,7 +36,7 @@ func (i *Illust) msg() string {
 }
 func (i *Illust) Download() error {
 
-	//UserID := ToolFunc.Int64ToString(i.UserID)
+	UserID := Int64ToString(i.UserID)
 
 	return nil
 }
