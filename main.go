@@ -1,28 +1,17 @@
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
-	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"net/http"
-	url2 "net/url"
 	"os"
 	"strconv"
 	"unsafe"
 )
 
-// TODO: 可视化gui 查找作者、插图  gui 20%
-// TODO： client代理 100% json网络请求 100%  body下载 30%
-const (
-	url     string = "https://p1.ssl.qhimg.com/t01d5be5429abbf0de5.png"
-	texturl string = "https://p1.ssl.qhimg.com/"
-)
+// TODO: 可视化gui 查找作者、插图   gui 5%
+// TODO： client代理 100% json网络请求 100%  header下载请求 0%
 
 type Illust struct {
 	Pid         int64    `db:"pid"`
@@ -34,106 +23,83 @@ type Illust struct {
 	CreatedTime string   `db:"created_time"`
 	UserID      int64    `db:"user_id"`
 	UserName    string   `db:"user_name"`
+	Pages       int64    `db:"pages"`
 }
 
 func (i *Illust) msg() string {
 	var tags string
-	for key, value := range i.Tags {
-		tags = tags + value
+	for _, value := range i.Tags {
+		tags = tags + value + "\n"
 	}
-	return strconv.FormatInt(i.Pid, 10) + "\n  " + i.Title + "\n  " + i.Caption + "\n  " + i.Tags + "\n " + i.AgeLimit + "\n  " + strconv.FormatInt(i.UserID, 10) + "\n " + i.UserName
+	return strconv.FormatInt(i.Pid, 10) + "\n  " + i.Title + "\n  " + i.Caption + "\n  " + tags + "\n " + i.AgeLimit + "\n  " + strconv.FormatInt(i.UserID, 10) + "\n " + i.UserName
 
 }
+func (i *Illust) Download() error {
 
-var rg *gin.Engine
-var f *os.File
-var client *http.Client
+	//UserID := ToolFunc.Int64ToString(i.UserID)
 
-func LogInit() {
-	log.SetFlags(log.Ldate | log.Ltime)
-	f, _ = os.OpenFile("temp.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
-	log.SetOutput(f)
+	return nil
 }
-
 func main() {
-	rg = gin.Default()
-	app := app.New()
-	appwindow := app.NewWindow("GO Pixiv")
-	//app.Run()
-	LogInit()
-
-	proxyURL, err := url2.Parse("http://127.0.0.1:10809")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(proxyURL),
-		},
-	}
-
-	text := widget.NewEntry()
-	button := widget.NewButton("click me", func() {
-		work(StringToInt64(text.Text))
-	})
-	content := container.New(layout.NewVBoxLayout(), text, button)
-	appwindow.SetContent(content)
-	appwindow.Resize(fyne.Size{600, 400})
+	LogInit()     //日志打印
+	windowInit()  //gui面板
+	clinentInit() //服务端请求设置
 	appwindow.ShowAndRun()
 }
-func work(id int64) (i *Illust, err error) {
+func work(id int64) (i *Illust, err error) { //按作品id查找
 	data, err := GetWebpageData("https://www.pixiv.net/ajax/illust/" + strconv.FormatInt(id, 10))
 	if err != nil {
-		log.Fatalln(err)
+		log.Println("Request failed", err)
+		//log.Fatalln(err)
+		os.Exit(2)
 	}
-	json := gjson.ParseBytes(data).Get("body")
+	json := gjson.ParseBytes(data).Get("body") //读取json内作品及作者id信息
 	var ageLimit = "all-age"
+	i = &Illust{}
 	for _, tag := range json.Get("tags.tags.#.tag").Array() {
+		i.Tags = append(i.Tags, tag.Str)
 		if tag.Str == "R-18" {
 			ageLimit = "r18"
 			break
 		}
 	}
-	i = &Illust{}
 	i.AgeLimit = ageLimit
 	i.Pid = json.Get("illustId").Int()
-	i.UserID = json.Get("userID").Int()
-
-	for key, _ := range json.Get("tags").Map() {
-		i.Tags = append(i.Tags, key)
-	}
+	i.UserID = json.Get("userId").Int()
 	i.Caption = json.Get("alt").Str
 	i.CreatedTime = json.Get("createDate").Str
+	i.Pages = json.Get("pageCount").Int()
+	i.Title = json.Get("illustTitle").Str
+	i.UserName = json.Get("userName").Str
 	for key, _ := range json.Get("urls").Map() {
 		i.ImageUrls = append(i.ImageUrls, key)
 	}
-	i.Title = json.Get("illustTitle").Str
-	i.UserName = json.Get("userName").Str
-	log.Println(i.msg())
-	//fmt.Println(json)
+	log.Print(i.msg())
 	return i, nil
 }
 
-func GetWebpageData(url string) (data []byte, err error) {
+func GetWebpageData(url string) ([]byte, error) { //请求得到作品json
 	response, err := client.Get(url)
 	if err != nil {
+		log.Println("Request failed ", err)
+		log.Fatalln(err)
+
+		os.Exit(3)
 		return nil, err
 	}
 	defer response.Body.Close()
-	webpageBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
+
+	webpageBytes, err3 := ioutil.ReadAll(response.Body)
+	if err3 != nil {
+		log.Println("read failed", err)
+		os.Exit(4)
 		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		log.Println("status code ", response.StatusCode)
 	}
 	return webpageBytes, nil
 }
 func BytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
-}
-func StringToInt64(s string) int64 {
-	var num int64 = 0
-	for i := 0; i < len(s); i++ {
-		num = num*10 + int64(s[i]-'0')
-	}
-	return num
 }
