@@ -1,6 +1,7 @@
 package main
 
 import (
+	. "github.com/ManInM00N/go-tool/statics"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
