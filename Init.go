@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"io/ioutil"
 	"log"
-	"main/ToolFunc"
+	"main/toolfunc"
 	"net/http"
 	url2 "net/url"
 	"os"
@@ -40,7 +40,7 @@ func windowInit() {
 	appwindow = app.NewWindow("GO Pixiv")
 	text := widget.NewEntry()
 	button := widget.NewButton("click me", func() {
-		work(ToolFunc.StringToInt64(text.Text))
+		work(toolfunc.StringToInt64(text.Text))
 	})
 
 	ginLog := widget.NewMultiLineEntry()
