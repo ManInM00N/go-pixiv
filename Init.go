@@ -7,9 +7,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	. "github.com/ManInM00N/go-tool/statics"
 	"io/ioutil"
 	"log"
+	"main/toolfunc"
 	"net/http"
 	url2 "net/url"
 	"os"
@@ -25,9 +25,6 @@ type Settings struct {
 	Password string `json:"password"`
 	Cookie   string `json:"cookie"`
 }
-
-var settings Settings
-
 type FyneLogWriter struct {
 	LogText *widget.Entry
 }
@@ -43,11 +40,7 @@ func windowInit() {
 	appwindow = app.NewWindow("GO Pixiv")
 	text := widget.NewEntry()
 	button := widget.NewButton("click me", func() {
-		illust, err := work(StringToInt64(text.Text))
-		if err != nil {
-			return
-		}
-		illust.Download()
+		work(toolfunc.StringToInt64(text.Text))
 	})
 
 	ginLog := widget.NewMultiLineEntry()
@@ -66,7 +59,7 @@ func LogInit() {
 func clinentInit() {
 	jfile, _ := os.Open("Config.json")
 	defer jfile.Close()
-
+	var settings Settings
 	bytevalue, _ := ioutil.ReadAll(jfile)
 	json.Unmarshal(bytevalue, &settings)
 	log.Printf(settings.Proxy)
