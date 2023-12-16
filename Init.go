@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	. "github.com/ManInM00N/go-tool/statics"
+	"github.com/tidwall/gjson"
 	"log"
 	"net/http"
 	"os"
@@ -29,25 +30,40 @@ func (w *FyneLogWriter) Write(p []byte) (n int, err error) {
 func windowInit() {
 	app := app.New()
 	appwindow = app.NewWindow("GO Pixiv")
-	text := widget.NewEntry()
-	button := widget.NewButton("Download", func() {
-
-	})
-	button.OnTapped = func() {
-		button.Disable()
-		illust, err := work(StringToInt64(text.Text))
-		if err != nil {
+	authorId := widget.NewEntry()
+	illustId := widget.NewEntry()
+	button1 := widget.NewButton("Download", func() {})
+	button1.OnTapped = func() {
+		button1.Disable()
+		illust, err := work(StringToInt64(illustId.Text))
+		if err != nil || illust == nil {
 			return
 		}
 		illust.Download()
-		button.Enable()
+		button1.Enable()
+	}
+	button2 := widget.NewButton("Download", func() {})
+	button2.OnTapped = func() {
+		button2.Disable()
+
+		var all map[string]gjson.Result
+		GetAuthor(StringToInt64(authorId.Text), &all)
+		log.Println(len(all))
+		for key, _ := range all {
+			illust, err := work(StringToInt64(key))
+			if err != nil || illust == nil {
+				continue
+			}
+			illust.Download()
+		}
+		button2.Enable()
 	}
 	ginLog := widget.NewMultiLineEntry()
-	content := container.New(layout.NewVBoxLayout(), text, button, container.NewScroll(ginLog))
+	content := container.New(layout.NewGridLayoutWithColumns(2), illustId, button1, container.NewScroll(ginLog), container.NewScroll(ginLog), authorId, button2)
 	appwindow.SetContent(content)
 	//out := io.MultiWriter(&FyneLogWriter{LogText: ginLog})
 
-	appwindow.Resize(fyne.Size{1200, 800})
+	appwindow.Resize(fyne.Size{800, 600})
 }
 func LogInit() {
 	log.SetFlags(log.Ldate | log.Ltime)

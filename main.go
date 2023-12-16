@@ -19,14 +19,12 @@ type Illust struct {
 	UserID          int64    `db:"user_id"`
 	UserName        string   `db:"user_name"`
 	Pages           int64    `db:"pages"`
+	Likecount       int64    `db:"likecount"`
 }
 
 func (i *Illust) msg() string {
-	var tags string
-	for _, value := range i.Tags {
-		tags = tags + value + "\n"
-	}
-	return strconv.FormatInt(i.Pid, 10) + "\n  " + i.Title + "\n  " + i.Caption + "\n  " + tags + "\n " + i.AgeLimit + "\n  " + strconv.FormatInt(i.UserID, 10) + "\n " + i.UserName
+	return strconv.FormatInt(i.Pid, 10) +
+		"\n  " + i.PreviewImageUrl
 
 }
 

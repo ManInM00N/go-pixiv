@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
+	"github.com/yuin/goldmark/util"
 	"io/ioutil"
 	"log"
 	"net/http"
 	url2 "net/url"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Settings struct {
@@ -19,6 +21,12 @@ type Settings struct {
 }
 
 var settings Settings
+
+type NotGood struct{}
+
+func (i *NotGood) Error() string {
+	return "LikeNotEnough"
+}
 
 type ImageData struct {
 	URLs struct {
@@ -45,8 +53,9 @@ func clinentInit() {
 	}
 	client = &http.Client{
 		Transport: &http.Transport{
-			Proxy:             http.ProxyURL(proxyURL),
-			DisableKeepAlives: true,
+			Proxy:                 http.ProxyURL(proxyURL),
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: time.Second * 5,
 		},
 	}
 }
@@ -55,12 +64,12 @@ func clinentInit() {
 func GetWebpageData(url string) ([]byte, error) { //请求得到作品json
 	var response *http.Response
 	var err error
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		response, err = client.Get(url)
 		if err == nil {
 			break
 		}
-		if i == 2 && err != nil {
+		if i == 4 && err != nil {
 			log.Println("Request failed ", err)
 			return nil, err
 		}
@@ -106,16 +115,35 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	i.Pages = jsonmsg.Get("pageCount").Int()
 	i.Title = jsonmsg.Get("illustTitle").Str
 	i.UserName = jsonmsg.Get("userName").Str
+	i.Likecount = jsonmsg.Get("likeCount").Int()
+	if i.Likecount < int64(1500) {
+		return nil, &NotGood{}
+	}
 	imagejson := gjson.ParseBytes(pages).Get("body").String()
+	all := gjson.ParseBytes(pages).Get("").Array()
+	for _, image := range all {
+		log.Printf(image.String())
+	}
+	log.Println(imagejson)
 	var imagedata []ImageData
-	err = json.Unmarshal([]byte(imagejson), &imagedata)
+	err = json.Unmarshal(util.StringToReadOnlyBytes(imagejson), &imagedata)
 	if err != nil {
 		log.Println("Error decoding", err)
 	}
+
 	i.PreviewImageUrl = imagedata[0].URLs.ThumbMini
 	for _, image := range imagedata {
 		i.ImageUrl = append(i.ImageUrl, image.URLs.Original)
 	}
 	log.Print(i.ImageUrl)
 	return i, nil
+}
+func GetAuthor(id int64, ss *map[string]gjson.Result) error {
+	data, err := GetWebpageData("https://www.pixiv.net/ajax/user/" + strconv.FormatInt(id, 10) + "/profile/all")
+	if err != nil {
+		return err
+	}
+	jsonmsg := gjson.ParseBytes(data).Get("body")
+	*ss = jsonmsg.Get("illusts").Map()
+	return nil
 }
