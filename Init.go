@@ -72,6 +72,7 @@ func windowInit() {
 	readlikelimit := widget.NewEntry()
 	cookieLabel := widget.NewLabel("cookie")
 	readcookie := widget.NewEntry()
+	readlikelimit.SetText(statics.Int64ToString(settings.LikeLimit))
 	readcookie.SetText(settings.Cookie)
 	readcookie.Refresh()
 	Likelimit := container.New(layout.NewGridWrapLayout(fyne.Size{Width: 100, Height: 38}), likelimit, readlikelimit)
