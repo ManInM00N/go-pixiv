@@ -1,5 +1,6 @@
 package main
 
+//go:generate goversioninfo
 import (
 	"strconv"
 )

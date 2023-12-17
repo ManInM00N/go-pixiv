@@ -89,8 +89,11 @@ func windowInit() {
 	setting := container.New(layout.NewGridWrapLayout(fyne.Size{Width: 400, Height: 50}), r18, Likelimit, Cookie, save)
 	content := container.New(layout.NewGridLayoutWithColumns(3), illustLabel, illustId, button1, authorLabel, authorId, button2)
 	all := container.NewVBox(content, setting)
+	icon, _ := fyne.LoadResourceFromPath("img/icon.ico")
+	app.SetIcon(icon)
+	appwindow.SetIcon(icon)
 	appwindow.SetContent(all)
-	appwindow.Resize(fyne.Size{400, 300})
+	appwindow.Resize(fyne.Size{300, 250})
 }
 func LogInit() {
 	T := time.Now()
