@@ -12,7 +12,7 @@
 <h2>配置设定</h2>
 <h3>在settings.yml中</h3>
 <p>
-proxy:你本地梯子的代理ip后面的端口，可以从你梯子的配置中得到，这个不会配的话我无能为力<br>
+proxy:你本地梯子的代理ip后面的端口，可以从你梯子的配置中得到，这个不会配的话我无能为力,以下是v2ray的，端口就是http后面的数字：<br>
 <img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/proxy.png"><br>
 cookie:打开pixiv的网页，按F12，从应用程序一栏中Cookie的PHPSESSID的值<br>
 <img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/cookie1.png"><br>
