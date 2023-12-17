@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
 	"github.com/yuin/goldmark/util"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,18 +15,23 @@ import (
 )
 
 type Settings struct {
-	Proxy    string `json:"proxy"`
-	Account  string `json:"account"`
-	Password string `json:"password"`
-	Cookie   string `json:"cookie"`
+	Proxy            string `yml:"proxy"`
+	Cookie           string `yml:"cookie"`
+	Agelimit         bool   `yml:"r-18" `
+	Downloadposition string `yml:"downloadposition"`
+	LikeLimit        int64  `yml:"minlikelimit"`
 }
 
 var settings Settings
 
 type NotGood struct{}
+type AgeLimit struct{}
 
 func (i *NotGood) Error() string {
 	return "LikeNotEnough"
+}
+func (i *AgeLimit) Error() string {
+	return "AgeLimitExceed"
 }
 
 type ImageData struct {
@@ -41,12 +47,17 @@ type ImageData struct {
 
 // TODO ：客户端代理设置 OK
 func clinentInit() {
-	jfile, _ := os.Open("Config.json")
+	jfile, _ := os.Open("settings.yml")
 	defer jfile.Close()
 	bytevalue, _ := ioutil.ReadAll(jfile)
-	json.Unmarshal(bytevalue, &settings)
-	log.Printf(settings.Proxy)
+	yaml.Unmarshal(bytevalue, &settings)
+	settings.LikeLimit = max(settings.LikeLimit, 0)
+	_, err := os.Stat(settings.Downloadposition)
+	if err != nil {
+		settings.Downloadposition = "Download"
+	}
 	proxyURL, err := url2.Parse(settings.Proxy)
+	log.Println(settings.Proxy, settings.Cookie, settings.Downloadposition)
 	if err != nil {
 		log.Println(err)
 		return
@@ -88,6 +99,7 @@ func GetWebpageData(url string) ([]byte, error) { //请求得到作品json
 }
 
 // TODO: 作品信息json请求   OK
+// TODO: 多页下载
 func work(id int64) (i *Illust, err error) { //按作品id查找
 	data, err := GetWebpageData("https://www.pixiv.net/ajax/illust/" + strconv.FormatInt(id, 10))
 	if err != nil {
@@ -116,15 +128,13 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	i.Title = jsonmsg.Get("illustTitle").Str
 	i.UserName = jsonmsg.Get("userName").Str
 	i.Likecount = jsonmsg.Get("likeCount").Int()
-	if i.Likecount < int64(1500) {
+	if i.Likecount < settings.LikeLimit {
 		return nil, &NotGood{}
 	}
-	imagejson := gjson.ParseBytes(pages).Get("body").String()
-	all := gjson.ParseBytes(pages).Get("").Array()
-	for _, image := range all {
-		log.Printf(image.String())
+	if i.AgeLimit == "r18" && !settings.Agelimit {
+		return nil, &AgeLimit{}
 	}
-	log.Println(imagejson)
+	imagejson := gjson.ParseBytes(pages).Get("body").String()
 	var imagedata []ImageData
 	err = json.Unmarshal(util.StringToReadOnlyBytes(imagejson), &imagedata)
 	if err != nil {
@@ -135,7 +145,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	for _, image := range imagedata {
 		i.ImageUrl = append(i.ImageUrl, image.URLs.Original)
 	}
-	log.Print(i.ImageUrl)
+	log.Println("图片数量：", len(i.ImageUrl))
 	return i, nil
 }
 func GetAuthor(id int64, ss *map[string]gjson.Result) error {

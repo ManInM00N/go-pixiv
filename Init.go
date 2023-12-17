@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var appwindow fyne.Window
@@ -59,15 +61,18 @@ func windowInit() {
 		button2.Enable()
 	}
 	ginLog := widget.NewMultiLineEntry()
-	content := container.New(layout.NewGridLayoutWithColumns(2), illustId, button1, container.NewScroll(ginLog), container.NewScroll(ginLog), authorId, button2)
+	content := container.New(layout.NewGridLayoutWithColumns(3), illustId, button1, container.NewScroll(ginLog), container.NewScroll(ginLog), authorId, button2)
 	appwindow.SetContent(content)
 	//out := io.MultiWriter(&FyneLogWriter{LogText: ginLog})
 
 	appwindow.Resize(fyne.Size{800, 600})
 }
 func LogInit() {
+	T := time.Now()
+	logfile := fmt.Sprintf("errorlog/%4d-%2d-%2d.log", T.Year(), T.Month(), T.Day())
 	log.SetFlags(log.Ldate | log.Ltime)
-	f, _ = os.OpenFile("temp.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+	f, _ = os.OpenFile(logfile, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
+	//f, _ = os.OpenFile("temp.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 	log.SetOutput(f)
 
 }
