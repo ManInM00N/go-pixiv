@@ -25,7 +25,7 @@ func (i *Illust) Download() {
 		return
 	}
 	Request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
-	Request.Header.Set("referer", "https://www.pixiv.net/")
+	Request.Header.Set("referer", "https://www.pixiv.net/artworks/"+statics.Int64ToString(i.Pid))
 	Request.Header.Set("cookie", settings.Cookie)
 	//UserID := Int64ToString(i.UserID)
 	var Response *http.Response
@@ -60,29 +60,29 @@ func (i *Illust) Download() {
 	}
 
 	//预览图：
-	filename := GetFileName(i.PreviewImageUrl)
-	filename = Type + "/" + filename
-	var f *os.File
-	f, err = os.Create(filename)
-	if err != nil {
-		log.Println("File Create Error", err)
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
+	//filename := GetFileName(i.PreviewImageUrl)
+	//filename = Type + "/" + filename
+	//var f *os.File
+	//f, err = os.Create(filename)
+	//if err != nil {
+	//	log.Println("File Create Error", err)
+	//}
+	//defer f.Close()
+	//w := bufio.NewWriter(f)
+	//for {
+	//	len, err := Response.Body.Read(buf)
+	//	if err != nil {
+	//		if err != io.EOF {
+	//			log.Println("Read error", err)
+	//			os.Remove(filename)
+	//			break
+	//		}
+	//		w.Write(buf[:len])
+	//		break
+	//	}
+	//	w.Write(buf[:len])
+	//}
 	buf := make([]byte, 1024)
-	for {
-		len, err := Response.Body.Read(buf)
-		if err != nil {
-			if err != io.EOF {
-				log.Println("Read error", err)
-				os.Remove(filename)
-				break
-			}
-			w.Write(buf[:len])
-			break
-		}
-		w.Write(buf[:len])
-	}
 	for j := int64(0); j < i.Pages; j++ {
 		imagefilename := GetFileName(i.ImageUrl[j])
 		imagefilepath := Type + "/" + imagefilename
@@ -93,7 +93,7 @@ func (i *Illust) Download() {
 			//os.Remove(imagefilepath)
 			continue
 		}
-		w = bufio.NewWriter(img)
+		w := bufio.NewWriter(img)
 		Request.URL, _ = url2.Parse(i.ImageUrl[j])
 		ok := true
 		for k := 0; k < 5; k++ {
@@ -117,7 +117,7 @@ func (i *Illust) Download() {
 			if err != nil {
 				if err != io.EOF {
 					log.Println("Read error", err)
-					os.Remove(filename)
+					os.Remove(imagefilepath)
 					break
 				}
 				w.Write(buf[:len])

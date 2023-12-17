@@ -47,7 +47,7 @@ type ImageData struct {
 
 // TODO ：客户端代理设置 OK
 func clinentInit() {
-	jfile, _ := os.Open("settings.yml")
+	jfile, _ := os.OpenFile("settings.yml", os.O_RDWR, 0644)
 	defer jfile.Close()
 	bytevalue, _ := ioutil.ReadAll(jfile)
 	yaml.Unmarshal(bytevalue, &settings)
@@ -56,8 +56,11 @@ func clinentInit() {
 	if err != nil {
 		settings.Downloadposition = "Download"
 	}
+	//jfile.Close()
+	out, _ := yaml.Marshal(&settings)
+	ioutil.WriteFile("settings.yml", out, 0644)
 	proxyURL, err := url2.Parse(settings.Proxy)
-	log.Println(settings.Proxy, settings.Cookie, settings.Downloadposition)
+	log.Println("Check settings:"+settings.Proxy, settings.Cookie, settings.Downloadposition)
 	if err != nil {
 		log.Println(err)
 		return

@@ -30,7 +30,7 @@ func (i *Illust) msg() string {
 
 func main() {
 	LogInit()     //日志打印
-	windowInit()  //gui面板
 	clinentInit() //服务端请求设置
+	windowInit()  //gui面板
 	appwindow.ShowAndRun()
 }

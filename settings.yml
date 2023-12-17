@@ -1,8 +1,5 @@
-#使用本地代理
-proxy: "http://127.0.0.1:10811"
-#proxy-win11: http://127.0.0.1:10809
-#根据本地代理修改: "http://127.0.0.1:xxxxx"   xxxx为你代理使用的端口
+proxy: http://127.0.0.1:10811
 cookie: 26338360_CSfZACje0LIdBCmCI0hDPYBZpE5ITfsY
-minlikelimit: 1500
-r-18: true
-downloadposition: "Download"
+agelimit: true
+downloadposition: Download
+likelimit: 1455
