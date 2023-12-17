@@ -99,7 +99,6 @@ func LogInit() {
 	logfile := fmt.Sprintf("errorlog/%4d-%2d-%2d.log", T.Year(), T.Month(), T.Day())
 	log.SetFlags(log.Ldate | log.Ltime)
 	f, _ = os.OpenFile(logfile, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
-	//f, _ = os.OpenFile("temp.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 	log.SetOutput(f)
 
 }
