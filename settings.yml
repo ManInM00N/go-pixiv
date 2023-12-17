@@ -1,5 +1,5 @@
 proxy: http://127.0.0.1:10811
-cookie: 3124
+cookie: "3124"
 agelimit: true
 downloadposition: Download
 likelimit: 1455
