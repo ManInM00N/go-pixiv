@@ -17,7 +17,7 @@ type Illust struct {
 	PreviewImageUrl string   `db:"preview_image"`
 	AgeLimit        string   `db:"age_limit"`
 	CreatedTime     string   `db:"created_time"`
-	UserID          int64    `db:"user_id"`
+	UserID          int64    `db:"userId"`
 	UserName        string   `db:"user_name"`
 	Pages           int64    `db:"pages"`
 	Likecount       int64    `db:"likecount"`

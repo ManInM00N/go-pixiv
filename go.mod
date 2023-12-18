@@ -4,7 +4,7 @@ go 1.21.5
 
 require (
 	fyne.io/fyne/v2 v2.4.2
-	github.com/ManInM00N/go-tool v0.0.0-20231218075143-aede80a8ff83
+	github.com/ManInM00N/go-tool v0.0.0-20231218083729-a52052f8c892
 	github.com/tidwall/gjson v1.17.0
 	github.com/yuin/goldmark v1.5.5
 	gopkg.in/yaml.v3 v3.0.1

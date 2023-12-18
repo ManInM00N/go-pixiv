@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// TODO: 作者全部作品下载
+// TODO: 作者全部作品下载OK
 // TODO: 基础下载 OK   目录管理下载 OK  主要图片全部下载OK    并发下载OK
 // TODO: 指针内存问题OK
 // TODO: 图片下载完整  ????
@@ -21,7 +21,6 @@ func (i *Illust) Download() {
 	var err error
 	Request, err2 := http.NewRequest("GET", i.PreviewImageUrl, nil)
 	clientcopy := client
-	println(Request)
 	if err2 != nil {
 		log.Println("Error creating request", err2)
 		return
