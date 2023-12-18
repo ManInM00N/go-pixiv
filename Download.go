@@ -99,7 +99,7 @@ func (i *Illust) Download() {
 		for k := 0; k < 5; k++ {
 			Response, err = client.Do(Request)
 			if k == 4 && err != nil {
-				log.Println("Error", err, i.ImageUrl[j])
+				log.Println("Illust Resouce Request Error", err, i.ImageUrl[j])
 				ok = false
 				break
 			} else if err == nil {

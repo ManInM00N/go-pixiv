@@ -76,6 +76,33 @@ func clinentInit() {
 
 // TODO:下载作品主题信息json OK
 func GetWebpageData(url string) ([]byte, error) { //请求得到作品json
+
+	var response *http.Response
+	var err error
+	for i := 0; i < 5; i++ {
+		response, err = client.Get(url)
+		if err == nil {
+			break
+		}
+		if i == 4 && err != nil {
+			log.Println("Request failed ", err)
+			return nil, err
+		}
+	}
+	defer response.Body.Close()
+	webpageBytes, err3 := ioutil.ReadAll(response.Body)
+	if err3 != nil {
+		log.Println("read failed", err)
+		os.Exit(4)
+		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		log.Println("status code ", response.StatusCode)
+	}
+	return webpageBytes, nil
+}
+func GetAuthorWebpage(url string) ([]byte, error) {
+
 	var response *http.Response
 	var err error
 	for i := 0; i < 5; i++ {
@@ -152,7 +179,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	return i, nil
 }
 func GetAuthor(id int64, ss *map[string]gjson.Result) error {
-	data, err := GetWebpageData("https://www.pixiv.net/ajax/user/" + strconv.FormatInt(id, 10) + "/profile/all")
+	data, err := GetAuthorWebpage("https://www.pixiv.net/ajax/user/" + strconv.FormatInt(id, 10) + "/profile/all")
 	if err != nil {
 		return err
 	}
