@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	. "github.com/ManInM00N/go-tool/goruntine"
 	"github.com/ManInM00N/go-tool/statics"
 	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
@@ -30,7 +31,11 @@ func (w *FyneLogWriter) Write(p []byte) (n int, err error) {
 	w.LogText.SetText(w.LogText.Text + message)
 	return len(p), nil
 }
+
+var pool *GoPool
+
 func windowInit() {
+	pool = NewGoPool(8)
 	app := app.New()
 	appwindow = app.NewWindow("GO Pixiv")
 	authorId := widget.NewEntry()
@@ -44,7 +49,8 @@ func windowInit() {
 		if err != nil || illust == nil {
 			return
 		}
-		illust.Download()
+		pool.Run(illust.Download)
+		illustId.SetText("")
 		button1.Enable()
 	}
 
@@ -60,8 +66,9 @@ func windowInit() {
 			if err != nil || illust == nil {
 				continue
 			}
-			illust.Download()
+			pool.Run(illust.Download)
 		}
+		authorId.SetText("")
 		button2.Enable()
 	}
 	r18 := widget.NewCheck("R-18", func(i bool) {

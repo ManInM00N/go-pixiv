@@ -13,19 +13,21 @@ import (
 )
 
 // TODO: 作者全部作品下载
-// TODO: 基础下载 OK   目录管理下载 OK  主要图片全部下载    并发下载
+// TODO: 基础下载 OK   目录管理下载 OK  主要图片全部下载OK    并发下载OK
 // TODO: 指针内存问题OK
+// TODO: 图片下载完整  ????
 func (i *Illust) Download() {
 	//var Request = new(http.Request)
 	var err error
 	Request, err2 := http.NewRequest("GET", i.PreviewImageUrl, nil)
+	clientcopy := client
 	println(Request)
 	if err2 != nil {
 		log.Println("Error creating request", err2)
 		return
 	}
 	Request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
-	Request.Header.Set("referer", "https://www.pixiv.net/artworks/"+statics.Int64ToString(i.Pid))
+	Request.Header.Set("referer", "https://www.pixiv.net")
 	Request.Header.Set("cookie", settings.Cookie)
 	//UserID := Int64ToString(i.UserID)
 	var Response *http.Response
@@ -34,15 +36,15 @@ func (i *Illust) Download() {
 			Response.Body.Close()
 		}
 	}()
-	for j := 0; j < 7; j++ {
-		Response, err = client.Do(Request)
-		if j == 6 && err != nil {
-			log.Println("Read Illust Error", err, i.PreviewImageUrl)
-			break
-		} else if err == nil {
-			break
-		}
-	}
+	//for j := 0; j < 7; j++ {
+	//	Response, err = clientcopy.Do(Request)
+	//	if j == 6 && err != nil {
+	//		log.Println("Read Illust Error", err, i.PreviewImageUrl)
+	//		break
+	//	} else if err == nil {
+	//		break
+	//	}
+	//}
 
 	_, err = os.Stat(settings.Downloadposition)
 	if err != nil {
@@ -82,7 +84,6 @@ func (i *Illust) Download() {
 	//	}
 	//	w.Write(buf[:len])
 	//}
-	buf := make([]byte, 1024)
 	for j := int64(0); j < i.Pages; j++ {
 		imagefilename := GetFileName(i.ImageUrl[j])
 		imagefilepath := Type + "/" + imagefilename
@@ -90,17 +91,19 @@ func (i *Illust) Download() {
 		img, err2 := os.Create(imagefilepath)
 		if err2 != nil {
 			log.Println("File Create Error", err2)
-			//os.Remove(imagefilepath)
+			os.Remove(imagefilepath)
 			continue
 		}
 		w := bufio.NewWriter(img)
 		Request.URL, _ = url2.Parse(i.ImageUrl[j])
 		ok := true
-		for k := 0; k < 5; k++ {
-			Response, err = client.Do(Request)
-			if k == 4 && err != nil {
-				log.Println("Illust Resouce Request Error", err, i.ImageUrl[j])
+		for k := 0; k < 10; k++ {
+			Response, err = clientcopy.Do(Request)
+			if k == 9 && err != nil {
+				log.Println("Illust Resouce Request Error", err)
+				log.Println("Retry Download", i.ImageUrl[j])
 				ok = false
+				j--
 				break
 			} else if err == nil {
 				break
@@ -108,9 +111,18 @@ func (i *Illust) Download() {
 		}
 		if !ok {
 			os.Remove(imagefilepath)
-			log.Println("Download Failed", imagefilepath)
 			continue
 		}
+		//data, err := io.Copy(img, Response.Body)
+		//if err != nil {
+		//	os.Remove(imagefilepath)
+		//	log.Println("Download Failed", err)
+		//
+		//}
+		log.Println(Response.ContentLength)
+		lr := int64(0)
+		buf := make([]byte, 1024)
+		ok = true
 		for {
 			var len int
 			len, err = Response.Body.Read(buf)
@@ -120,11 +132,29 @@ func (i *Illust) Download() {
 					os.Remove(imagefilepath)
 					break
 				}
-				w.Write(buf[:len])
+				lr += int64(len)
+				_, err := w.Write(buf[:len])
+				if err != nil {
+					log.Println("Read bytes error", err)
+					ok = false
+					break
+				}
 				break
 			}
-			w.Write(buf[:len])
+			lr += int64(len)
+			_, err := w.Write(buf[:len])
+			if err != nil {
+				ok = false
+				log.Println("Read bytes error", err)
+				break
+			}
 		}
+		if !ok {
+			j--
+			os.Remove(imagefilepath)
+			continue
+		}
+		log.Println(lr)
 		img.Close()
 		log.Println("Download Success", imagefilename)
 	}
