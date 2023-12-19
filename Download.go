@@ -128,8 +128,8 @@ func (i *Illust) Download() {
 
 		}
 	}
-	time.Sleep(50 * time.Millisecond)
-	log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
+	time.Sleep(80 * time.Millisecond)
+	//log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
 	return
 }
 func GetFileName(path string) string {
