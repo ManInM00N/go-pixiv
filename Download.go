@@ -49,6 +49,7 @@ func (i *Illust) Download() {
 	if err != nil {
 		os.Mkdir(Type, os.ModePerm)
 	}
+	failtimes := 0
 	for j := int64(0); j < i.Pages; j++ {
 		imagefilename := GetFileName(i.ImageUrl[j])
 		imagefilepath := Type + "/" + imagefilename
@@ -65,19 +66,26 @@ func (i *Illust) Download() {
 		for k := 0; k < 10; k++ {
 			Response, err = clientcopy.Do(Request)
 			if k == 9 && err != nil {
-				log.Println("Illust Resouce Request Error", err)
-				log.Println("Retry Download", i.ImageUrl[j])
+				log.Println("Illust Resouce Request Error", err, Response.Status)
+				//log.Println("Retry Download", i.ImageUrl[j])
 				ok = false
 				j--
+				failtimes++
+				if failtimes > 2 {
+					j++
+				}
 				break
 			} else if err == nil {
 				break
 			}
+			time.Sleep(time.Millisecond * 100)
+
 		}
 		if !ok {
 			os.Remove(imagefilepath)
 			continue
 		}
+		failtimes = 0
 		buf, err := ioutil.ReadAll(Response.Body)
 		if err != nil {
 			log.Println(i.Pid, "Download Failed", err, "retrying")

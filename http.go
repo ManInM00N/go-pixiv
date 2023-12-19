@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type NotGood struct{}
@@ -51,6 +52,8 @@ func GetWebpageData(url, id string) ([]byte, error) { //请求得到作品json
 			log.Println("Request failed ", err)
 			return nil, err
 		}
+		time.Sleep(time.Millisecond * 100)
+
 	}
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
@@ -84,6 +87,7 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 			log.Println("Request failed ", err)
 			return nil, err
 		}
+		time.Sleep(time.Millisecond * 100)
 	}
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
@@ -99,7 +103,7 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 }
 
 // TODO: 作品信息json请求   OK
-// TODO: 多页下载
+// TODO: 多页下载 OK
 func work(id int64) (i *Illust, err error) { //按作品id查找
 	urltail := strconv.FormatInt(id, 10)
 	strid := urltail
