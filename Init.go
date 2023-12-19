@@ -35,8 +35,9 @@ func (w *FyneLogWriter) Write(p []byte) (n int, err error) {
 var pool *GoPool
 
 func windowInit() {
-	pool = NewGoPool(8)
+	pool = NewGoPool(16)
 	app := app.New()
+	Taskpool := NewGoPool(8)
 	appwindow = app.NewWindow("GO Pixiv")
 	authorId := widget.NewEntry()
 	illustId := widget.NewEntry()
@@ -56,20 +57,25 @@ func windowInit() {
 
 	button2 := widget.NewButton("Download", func() {})
 	button2.OnTapped = func() {
-		button2.Disable()
-
-		var all map[string]gjson.Result
-		GetAuthor(statics.StringToInt64(authorId.Text), &all)
-		log.Println(len(all))
-		for key, _ := range all {
-			illust, err := work(statics.StringToInt64(key))
-			if err != nil || illust == nil {
-				continue
+		//button2.Disable()
+		//go func() {
+		text := authorId.Text
+		go Taskpool.Run(func() {
+			var all map[string]gjson.Result
+			GetAuthor(statics.StringToInt64(text), &all)
+			log.Println(len(all))
+			for key, _ := range all {
+				illust, err := work(statics.StringToInt64(key))
+				if err != nil || illust == nil {
+					continue
+				}
+				pool.Run(illust.Download)
 			}
-			pool.Run(illust.Download)
-		}
+		})
+		//}()
+
 		authorId.SetText("")
-		button2.Enable()
+		//button2.Enable()
 	}
 	r18 := widget.NewCheck("R-18", func(i bool) {
 	})

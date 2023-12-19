@@ -130,12 +130,12 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
 	if err3 != nil {
-		log.Println("read failed", err)
+		log.Println("read failed", err3)
 		os.Exit(4)
-		return nil, err
+		return nil, err3
 	}
 	if response.StatusCode != http.StatusOK {
-		log.Println("status code ", response.StatusCode)
+		log.Println("status code ", response.Status)
 	}
 	return webpageBytes, nil
 }
@@ -190,7 +190,6 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	for _, image := range imagedata {
 		i.ImageUrl = append(i.ImageUrl, image.URLs.Original)
 	}
-	log.Println("图片数量：", len(i.ImageUrl))
 	return i, nil
 }
 func GetAuthor(id int64, ss *map[string]gjson.Result) error {

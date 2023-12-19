@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"github.com/ManInM00N/go-tool/statics"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	url2 "net/url"
@@ -19,6 +18,7 @@ import (
 func (i *Illust) Download() {
 	//var Request = new(http.Request)
 	var err error
+	total := 0
 	Request, err2 := http.NewRequest("GET", i.PreviewImageUrl, nil)
 	clientcopy := client
 	if err2 != nil {
@@ -35,16 +35,6 @@ func (i *Illust) Download() {
 			Response.Body.Close()
 		}
 	}()
-	//for j := 0; j < 7; j++ {
-	//	Response, err = clientcopy.Do(Request)
-	//	if j == 6 && err != nil {
-	//		log.Println("Read Illust Error", err, i.PreviewImageUrl)
-	//		break
-	//	} else if err == nil {
-	//		break
-	//	}
-	//}
-
 	_, err = os.Stat(settings.Downloadposition)
 	if err != nil {
 		os.Mkdir(settings.Downloadposition, os.ModePerm)
@@ -59,41 +49,17 @@ func (i *Illust) Download() {
 	if err != nil {
 		os.Mkdir(Type, os.ModePerm)
 	}
-
-	//预览图：
-	//filename := GetFileName(i.PreviewImageUrl)
-	//filename = Type + "/" + filename
-	//var f *os.File
-	//f, err = os.Create(filename)
-	//if err != nil {
-	//	log.Println("File Create Error", err)
-	//}
-	//defer f.Close()
-	//w := bufio.NewWriter(f)
-	//for {
-	//	len, err := Response.Body.Read(buf)
-	//	if err != nil {
-	//		if err != io.EOF {
-	//			log.Println("Read error", err)
-	//			os.Remove(filename)
-	//			break
-	//		}
-	//		w.Write(buf[:len])
-	//		break
-	//	}
-	//	w.Write(buf[:len])
-	//}
 	for j := int64(0); j < i.Pages; j++ {
 		imagefilename := GetFileName(i.ImageUrl[j])
 		imagefilepath := Type + "/" + imagefilename
 
-		img, err2 := os.Create(imagefilepath)
-		if err2 != nil {
-			log.Println("File Create Error", err2)
-			os.Remove(imagefilepath)
-			continue
-		}
-		w := bufio.NewWriter(img)
+		//img, err2 := os.Create(imagefilepath)
+		//if err2 != nil {
+		//	log.Println("File Create Error", err2)
+		//	os.Remove(imagefilepath)
+		//	continue
+		//}
+		//w := bufio.NewWriter(img)
 		Request.URL, _ = url2.Parse(i.ImageUrl[j])
 		ok := true
 		for k := 0; k < 10; k++ {
@@ -112,52 +78,59 @@ func (i *Illust) Download() {
 			os.Remove(imagefilepath)
 			continue
 		}
-		//data, err := io.Copy(img, Response.Body)
-		//if err != nil {
-		//	os.Remove(imagefilepath)
-		//	log.Println("Download Failed", err)
-		//
-		//}
-		log.Println(Response.ContentLength)
-		lr := int64(0)
-		buf := make([]byte, 1024)
-		ok = true
-		for {
-			var len int
-			len, err = Response.Body.Read(buf)
-			if err != nil {
-				if err != io.EOF {
-					log.Println("Read error", err)
-					os.Remove(imagefilepath)
-					break
-				}
-				lr += int64(len)
-				_, err := w.Write(buf[:len])
-				if err != nil {
-					log.Println("Read bytes error", err)
-					ok = false
-					break
-				}
-				break
-			}
-			lr += int64(len)
-			_, err := w.Write(buf[:len])
-			if err != nil {
-				ok = false
-				log.Println("Read bytes error", err)
-				break
-			}
-		}
-		if !ok {
-			j--
+		buf, err := ioutil.ReadAll(Response.Body)
+		if err != nil {
+			log.Println(i.Pid, "Download Failed", err, "retrying")
 			os.Remove(imagefilepath)
+
+			j--
 			continue
 		}
-		log.Println(lr)
-		img.Close()
-		log.Println("Download Success", imagefilename)
+		err = ioutil.WriteFile(imagefilepath, buf, 666)
+		total++
+		if err != nil {
+			log.Println("Write Failed", err)
+			//buf := make([]byte, 1024)
+			//ok = true
+			//for {
+			//	var len int
+			//	len, err = Response.Body.Read(buf)
+			//	if err != nil {
+			//		if err != io.EOF {
+			//			log.Println("Read error", err)
+			//			os.Remove(imagefilepath)
+			//			break
+			//		}
+			//		lr += int64(len)
+			//		_, err := w.Write(buf[:len])
+			//		if err != nil {
+			//			log.Println("Read bytes error", err)
+			//			ok = false
+			//			break
+			//		}
+			//		break
+			//	}
+			//	lr += int64(len)
+			//	_, err := w.Write(buf[:len])
+			//	if err != nil {
+			//		ok = false
+			//		log.Println("Read bytes error", err)
+			//		break
+			//	}
+			//}
+			//if !ok {
+			//	j--
+			//	os.Remove(imagefilepath)
+			//	continue
+			//}
+			//log.Println(lr)
+			//img.Close()
+
+		}
 	}
 	time.Sleep(50 * time.Millisecond)
+	log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
+	return
 }
 func GetFileName(path string) string {
 	index := strings.LastIndex(path, "/")
