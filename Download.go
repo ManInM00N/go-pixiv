@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"github.com/ManInM00N/go-tool/statics"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	url2 "net/url"
@@ -85,8 +86,9 @@ func (i *Illust) Download() {
 			os.Remove(imagefilepath)
 			continue
 		}
+
 		failtimes = 0
-		buf, err := ioutil.ReadAll(Response.Body)
+		f, err := os.OpenFile(imagefilepath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 		if err != nil {
 			log.Println(i.Pid, "Download Failed", err, "retrying")
 			os.Remove(imagefilepath)
@@ -94,47 +96,16 @@ func (i *Illust) Download() {
 			j--
 			continue
 		}
-		err = ioutil.WriteFile(imagefilepath, buf, 666)
-		total++
+		defer f.Close()
+
+		bufWriter := bufio.NewWriter(f)
+		_, err = io.Copy(bufWriter, Response.Body)
 		if err != nil {
 			log.Println("Write Failed", err)
-			//buf := make([]byte, 1024)
-			//ok = true
-			//for {
-			//	var len int
-			//	len, err = Response.Body.Read(buf)
-			//	if err != nil {
-			//		if err != io.EOF {
-			//			log.Println("Read error", err)
-			//			os.Remove(imagefilepath)
-			//			break
-			//		}
-			//		lr += int64(len)
-			//		_, err := w.Write(buf[:len])
-			//		if err != nil {
-			//			log.Println("Read bytes error", err)
-			//			ok = false
-			//			break
-			//		}
-			//		break
-			//	}
-			//	lr += int64(len)
-			//	_, err := w.Write(buf[:len])
-			//	if err != nil {
-			//		ok = false
-			//		log.Println("Read bytes error", err)
-			//		break
-			//	}
-			//}
-			//if !ok {
-			//	j--
-			//	os.Remove(imagefilepath)
-			//	continue
-			//}
-			//log.Println(lr)
-			//img.Close()
-
 		}
+		bufWriter.Flush()
+
+		total++
 	}
 	time.Sleep(100 * time.Millisecond)
 	//log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
