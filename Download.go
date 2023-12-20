@@ -136,7 +136,7 @@ func (i *Illust) Download() {
 
 		}
 	}
-	time.Sleep(80 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	//log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
 	return
 }

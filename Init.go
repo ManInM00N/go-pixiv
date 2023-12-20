@@ -71,8 +71,10 @@ func windowInit() {
 		go Taskpool.Run(func() {
 			var all map[string]gjson.Result
 			GetAuthor(statics.StringToInt64(text), &all)
+			log.Println(text + " pushed TaskQueue")
 			satisfy := 0
 			log.Println(text + "'s artworks Start download")
+
 			for key, _ := range all {
 				illust, err := work(statics.StringToInt64(key))
 				if err != nil {
@@ -123,7 +125,7 @@ func windowInit() {
 func LogInit() {
 	T := time.Now()
 	logfile := fmt.Sprintf("errorlog/%4d-%2d-%2d.log", T.Year(), T.Month(), T.Day())
-	log.SetFlags(log.Ldate | log.Ltime)
+	log.SetFlags(log.Ltime)
 	f, _ = os.OpenFile(logfile, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
 	log.SetOutput(f)
 

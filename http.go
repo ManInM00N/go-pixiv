@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 )
@@ -52,18 +51,20 @@ func GetWebpageData(url, id string) ([]byte, error) { //请求得到作品json
 			log.Println("Request failed ", err)
 			return nil, err
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second * 1)
 
 	}
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
 	if err3 != nil {
 		log.Println("read failed", err)
-		os.Exit(4)
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
 		log.Println("status code ", response.StatusCode)
+		if response.StatusCode == http.StatusTooManyRequests {
+			time.Sleep(1 * time.Second)
+		}
 	}
 	return webpageBytes, nil
 }
@@ -87,17 +88,19 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 			log.Println("Request failed ", err)
 			return nil, err
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Second * 1)
 	}
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
 	if err3 != nil {
 		log.Println("read failed", err3)
-		os.Exit(4)
 		return nil, err3
 	}
 	if response.StatusCode != http.StatusOK {
 		log.Println("status code ", response.Status)
+		if response.StatusCode == http.StatusTooManyRequests {
+			time.Sleep(1 * time.Second)
+		}
 	}
 	return webpageBytes, nil
 }
@@ -140,6 +143,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	err = json.Unmarshal(util.StringToReadOnlyBytes(imagejson), &imagedata)
 	if err != nil {
 		log.Println("Error decoding", err)
+		return nil, err
 	}
 
 	i.PreviewImageUrl = imagedata[0].URLs.ThumbMini
