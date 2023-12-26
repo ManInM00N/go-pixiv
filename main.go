@@ -34,4 +34,5 @@ func main() {
 	windowInit()  //gui面板
 	appwindow.ShowAndRun()
 	defer P.Release()
+	defer TaskPool.Close()
 }

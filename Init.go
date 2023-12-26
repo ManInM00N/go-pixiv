@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -54,10 +55,9 @@ func windowInit() {
 	app := app.New()
 	//defer P.Release()
 	//defer taskpool.Release()
-	TaskPool = goruntine.NewGoPool(1)
+	TaskPool = goruntine.NewGoPool(200, 1)
+	TaskPool.Run()
 	P = gopool.NewGoPool(4, gopool.WithTaskQueueSize(5000))
-	//P, _ = ants.NewPool(4, ants.WithLogger(log.Default()))
-	//Taskpool := NewGoPool(settings.Queuelimit)
 	appwindow = app.NewWindow("GO Pixiv")
 	authorId := widget.NewEntry()
 	illustId := widget.NewEntry()
@@ -67,16 +67,9 @@ func windowInit() {
 	button1.OnTapped = func() {
 		text := illustId.Text
 		P.AddTask(func() (interface{}, error) {
-			JustDownload(text)
+			JustDownload(text, true)
 			return nil, nil
 		})
-		//P.Submit(func() {
-		//	JustDownload(text)
-		//	return
-		//})
-		//go pool.Run(func() {
-		//	JustDownload(text)
-		//})
 		illustId.SetText("")
 	}
 	container.New(layout.NewStackLayout())
@@ -84,11 +77,10 @@ func windowInit() {
 	button2.OnTapped = func() {
 		text := authorId.Text
 		authorId.SetText("")
-
 		button2.Disabled()
-		c := make(chan string, 2000)
-		//go TaskPool.Run(func() {
-		go func() {
+		log.Println(text + " pushed TaskQueue")
+		TaskPool.Add(func() {
+			c := make(chan string, 2000)
 			all, err := GetAuthor(statics.StringToInt64(text))
 			if err != nil {
 				log.Println("Error getting author", err)
@@ -96,7 +88,6 @@ func windowInit() {
 
 				return
 			}
-			log.Println(text + " pushed TaskQueue")
 			log.Println(text + "'s artworks Start download")
 			satisfy = 0
 			for key, _ := range all {
@@ -108,9 +99,8 @@ func windowInit() {
 					if err != nil {
 						//log.Println(key, " Download failed")
 						//continue
-						if (err != &NotGood{}) && err != (&AgeLimit{}) {
+						if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
 							c <- temp
-
 						}
 						return nil, nil
 					}
@@ -120,19 +110,21 @@ func windowInit() {
 				})
 			}
 			P.Wait()
-			log.Println(text+"'s artworks -> Satisfied and Successfully downloaded illusts: ", satisfy, "in all: ", len(all))
 			for len(c) > 0 {
 				ss := <-c
-				log.Println(ss, " Download failed Now retrying")
+				//log.Println(ss, " Download failed Now retrying")
 				P.AddTask(func() (interface{}, error) {
-					JustDownload(ss)
+					if JustDownload(ss, false) {
+						satisfy++
+					}
 					return nil, nil
 				})
 			}
 			P.Wait()
+			log.Println(text+"'s artworks -> Satisfied and Successfully downloaded illusts: ", satisfy, "in all: ", len(all))
+			satisfy = 0
 			close(c)
-		}()
-
+		})
 		button2.Enable()
 
 	}
@@ -210,15 +202,20 @@ func GetClient() *http.Client {
 		},
 	}
 }
-func JustDownload(pid string) {
+func JustDownload(pid string, mode bool) bool {
 	illust, _ := work(statics.StringToInt64(pid))
 	if illust == nil {
 		log.Println(pid, " Download failed")
-		return
+		return false
 	}
-	log.Println(pid + " Start download")
+	if mode {
+		log.Println(pid + " Start download")
+	}
 	illust.Download()
-	log.Println(pid + " Finished download")
+	if mode {
+		log.Println(pid + " Finished download")
+	}
+	return true
 }
 func Get(pid string) {
 

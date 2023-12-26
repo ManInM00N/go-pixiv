@@ -12,10 +12,10 @@ import (
 )
 
 type NotGood struct {
-	S string "LikeNotEnough"
+	S string
 }
 type AgeLimit struct {
-	S string "AgeLimitExceed"
+	S string
 }
 
 func (i NotGood) Error() string {
@@ -177,10 +177,10 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 		i.ImageUrl = append(i.ImageUrl, image.URLs.Original)
 	}
 	if i.Likecount < settings.LikeLimit {
-		return i, &NotGood{}
+		return i, &NotGood{"LikeNotEnough"}
 	}
 	if i.AgeLimit == "r18" && !settings.Agelimit {
-		return i, &AgeLimit{}
+		return i, &AgeLimit{"AgeLimitExceed"}
 	}
 
 	return i, nil

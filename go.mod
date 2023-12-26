@@ -4,7 +4,8 @@ go 1.21.5
 
 require (
 	fyne.io/fyne/v2 v2.4.2
-	github.com/ManInM00N/go-tool v0.0.0-20231218083729-a52052f8c892
+	github.com/ManInM00N/go-tool v0.0.0-20231226143905-edd3544babae
+	github.com/devchat-ai/gopool v0.6.2
 	github.com/tidwall/gjson v1.17.0
 	github.com/yuin/goldmark v1.5.5
 	gopkg.in/yaml.v3 v3.0.1
@@ -13,7 +14,6 @@ require (
 require (
 	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/devchat-ai/gopool v0.6.2 // indirect
 	github.com/fredbi/uri v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect
