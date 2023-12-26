@@ -7,12 +7,12 @@
 需要有自己的pixiv账号,若个人行为导致账号封禁概不负责<br>
 保证代理无误的情况下，不添加cookie也可以下载<br>
 <br>
-下载速度取决于你的代理，理论上参数可以调很快但是会给429，而且太快会被封443端口，所以不建议下太快，默认设置间隔时间100ms
+下载速度取决于你的代理，理论上参数可以调很快但是会给429，而且太快会被封443端口，所以不建议下太快，默认设置间隔时间1000ms
 </h1>
 <h2>
 目前没有设计gui，暂时使用fyne做简陋的读入，作者现在大二前端写的依托，所以等寒假摸完了vue，再换成wails在做成包发布<br>
-现存在大型图片容易读取不完整，小图片也存在这种问题，故临时更换读取方法，下载速度变慢<br>
-使用参考:https://github.com/daydreamer-json/pixiv-ajax-api-docs/tree/main<br>
+<br>
+制作参考:https://github.com/daydreamer-json/pixiv-ajax-api-docs/tree/main<br>
 </h2>
 <h2>配置设定</h2>
 <h3>在settings.yml中</h3>

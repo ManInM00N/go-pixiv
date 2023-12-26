@@ -7,9 +7,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	. "github.com/ManInM00N/go-tool/goruntine"
+	"github.com/ManInM00N/go-tool/goruntine"
 	"github.com/ManInM00N/go-tool/statics"
-	"github.com/tidwall/gjson"
+	"github.com/devchat-ai/gopool"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
@@ -33,7 +33,6 @@ var settings Settings
 
 var appwindow fyne.Window
 var f *os.File
-var client *http.Client
 
 type FyneLogWriter struct {
 	LogText *widget.Entry
@@ -45,12 +44,20 @@ func (w *FyneLogWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-var pool *GoPool
+var TaskPool *goruntine.GoPool
+
+// var P *ants.Pool
+var P gopool.GoPool
+var satisfy int
 
 func windowInit() {
-	pool = NewGoPool(settings.Illustqueuelimit)
 	app := app.New()
-	Taskpool := NewGoPool(settings.Queuelimit)
+	//defer P.Release()
+	//defer taskpool.Release()
+	TaskPool = goruntine.NewGoPool(1)
+	P = gopool.NewGoPool(4, gopool.WithTaskQueueSize(5000))
+	//P, _ = ants.NewPool(4, ants.WithLogger(log.Default()))
+	//Taskpool := NewGoPool(settings.Queuelimit)
 	appwindow = app.NewWindow("GO Pixiv")
 	authorId := widget.NewEntry()
 	illustId := widget.NewEntry()
@@ -59,35 +66,75 @@ func windowInit() {
 	button1 := widget.NewButton("Download", func() {})
 	button1.OnTapped = func() {
 		text := illustId.Text
-		go pool.Run(func() {
+		P.AddTask(func() (interface{}, error) {
 			JustDownload(text)
+			return nil, nil
 		})
+		//P.Submit(func() {
+		//	JustDownload(text)
+		//	return
+		//})
+		//go pool.Run(func() {
+		//	JustDownload(text)
+		//})
 		illustId.SetText("")
 	}
 	container.New(layout.NewStackLayout())
 	button2 := widget.NewButton("Download", func() {})
 	button2.OnTapped = func() {
 		text := authorId.Text
-		go Taskpool.Run(func() {
-			var all map[string]gjson.Result
-			GetAuthor(statics.StringToInt64(text), &all)
-			log.Println(text + " pushed TaskQueue")
-			satisfy := 0
-			log.Println(text + "'s artworks Start download")
-
-			for key, _ := range all {
-				illust, err := work(statics.StringToInt64(key))
-				if err != nil {
-					continue
-				}
-				illust.Download()
-				satisfy++
-			}
-			log.Println(text+"'s artworks -> Satisfied illusts: ", satisfy, "in all: ", len(all))
-
-		})
-
 		authorId.SetText("")
+
+		button2.Disabled()
+		c := make(chan string, 2000)
+		//go TaskPool.Run(func() {
+		go func() {
+			all, err := GetAuthor(statics.StringToInt64(text))
+			if err != nil {
+				log.Println("Error getting author", err)
+				button2.Enable()
+
+				return
+			}
+			log.Println(text + " pushed TaskQueue")
+			log.Println(text + "'s artworks Start download")
+			satisfy = 0
+			for key, _ := range all {
+				k := key
+				P.AddTask(func() (interface{}, error) {
+					//time.Sleep(1 * time.Second)
+					temp := k
+					illust, err := work(statics.StringToInt64(temp))
+					if err != nil {
+						//log.Println(key, " Download failed")
+						//continue
+						if (err != &NotGood{}) && err != (&AgeLimit{}) {
+							c <- temp
+
+						}
+						return nil, nil
+					}
+					illust.Download()
+					satisfy++
+					return nil, nil
+				})
+			}
+			P.Wait()
+			log.Println(text+"'s artworks -> Satisfied and Successfully downloaded illusts: ", satisfy, "in all: ", len(all))
+			for len(c) > 0 {
+				ss := <-c
+				log.Println(ss, " Download failed Now retrying")
+				P.AddTask(func() (interface{}, error) {
+					JustDownload(ss)
+					return nil, nil
+				})
+			}
+			P.Wait()
+			close(c)
+		}()
+
+		button2.Enable()
+
 	}
 	r18 := widget.NewCheck("R-18", func(i bool) {
 	})
@@ -146,13 +193,16 @@ func clinentInit() {
 
 	out, _ := yaml.Marshal(&settings)
 	ioutil.WriteFile("settings.yml", out, 0644)
-	proxyURL, err := url2.Parse(settings.Proxy)
+	_, err = url2.Parse(settings.Proxy)
 	log.Println("Check settings:"+settings.Proxy, "PHPSESSID="+settings.Cookie, settings.Downloadposition)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client = &http.Client{
+}
+func GetClient() *http.Client {
+	proxyURL, _ := url2.Parse(settings.Proxy)
+	return &http.Client{
 		Transport: &http.Transport{
 			Proxy:                 http.ProxyURL(proxyURL),
 			DisableKeepAlives:     true,
@@ -162,7 +212,14 @@ func clinentInit() {
 }
 func JustDownload(pid string) {
 	illust, _ := work(statics.StringToInt64(pid))
-	log.Println(pid + "Start download")
+	if illust == nil {
+		log.Println(pid, " Download failed")
+		return
+	}
+	log.Println(pid + " Start download")
 	illust.Download()
-	log.Println(pid + "Finished download")
+	log.Println(pid + " Finished download")
+}
+func Get(pid string) {
+
 }

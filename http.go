@@ -11,14 +11,18 @@ import (
 	"time"
 )
 
-type NotGood struct{}
-type AgeLimit struct{}
-
-func (i *NotGood) Error() string {
-	return "LikeNotEnough"
+type NotGood struct {
+	S string "LikeNotEnough"
 }
-func (i *AgeLimit) Error() string {
-	return "AgeLimitExceed"
+type AgeLimit struct {
+	S string "AgeLimitExceed"
+}
+
+func (i NotGood) Error() string {
+	return i.S
+}
+func (i AgeLimit) Error() string {
+	return i.S
 }
 
 type ImageData struct {
@@ -38,10 +42,20 @@ func GetWebpageData(url, id string) ([]byte, error) { //请求得到作品json
 	var response *http.Response
 	var err error
 	Request, err := http.NewRequest("GET", "https://www.pixiv.net/ajax/illust/"+url, nil)
+	if err != nil {
+		log.Println("Error creating request", err)
+		return nil, err
+	}
 	Request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
 	Request.Header.Set("referer", "https://www.pixiv.net/artworks/"+id)
-	Request.Header.Set("cookie", "PHPSESSID="+settings.Cookie)
-	clientcopy := client
+	Cookie := &http.Cookie{
+		Name:  "PHPSESSID",
+		Value: settings.Cookie,
+	}
+	Request.AddCookie(Cookie)
+	Request.Header.Set("PHPSESSID", settings.Cookie)
+
+	clientcopy := GetClient()
 	for i := 0; i < 10; i++ {
 		response, err = clientcopy.Do(Request)
 		if err == nil {
@@ -51,19 +65,20 @@ func GetWebpageData(url, id string) ([]byte, error) { //请求得到作品json
 			log.Println("Request failed ", err)
 			return nil, err
 		}
-		time.Sleep(time.Second * 1)
+		time.Sleep(3 * time.Second)
 
 	}
 	defer response.Body.Close()
+
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
 	if err3 != nil {
-		log.Println("read failed", err)
-		return nil, err
+		log.Println("read failed", err3)
+		return nil, err3
 	}
 	if response.StatusCode != http.StatusOK {
 		log.Println("status code ", response.StatusCode)
-		if response.StatusCode == http.StatusTooManyRequests {
-			time.Sleep(1 * time.Second)
+		if response.StatusCode == 429 {
+			time.Sleep(10 * time.Second)
 		}
 	}
 	return webpageBytes, nil
@@ -74,10 +89,19 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 	var response *http.Response
 	var err error
 	Request, err := http.NewRequest("GET", "https://www.pixiv.net/ajax/user/"+url+"/profile/all", nil)
+	if err != nil {
+		log.Println("Error creating request", err)
+		return nil, err
+	}
 	Request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
 	Request.Header.Set("referer", "https://www.pixiv.net/member.php?id="+id)
-	Request.Header.Set("cookie", "PHPSESSID="+settings.Cookie)
-	clientcopy := client
+	Cookie := &http.Cookie{
+		Name:  "PHPSESSID",
+		Value: settings.Cookie,
+	}
+	Request.AddCookie(Cookie)
+	Request.Header.Set("PHPSESSID", settings.Cookie)
+	clientcopy := GetClient()
 
 	for i := 0; i < 10; i++ {
 		response, err = clientcopy.Do(Request)
@@ -88,7 +112,7 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 			log.Println("Request failed ", err)
 			return nil, err
 		}
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * 3)
 	}
 	defer response.Body.Close()
 	webpageBytes, err3 := ioutil.ReadAll(response.Body)
@@ -98,8 +122,8 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 	}
 	if response.StatusCode != http.StatusOK {
 		log.Println("status code ", response.Status)
-		if response.StatusCode == http.StatusTooManyRequests {
-			time.Sleep(1 * time.Second)
+		if response.StatusCode == 429 {
+			time.Sleep(10 * time.Second)
 		}
 	}
 	return webpageBytes, nil
@@ -112,6 +136,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	strid := urltail
 	data, err := GetWebpageData(urltail, strid)
 	if err != nil {
+		log.Println("GetWebpageData error", err)
 		return nil, err
 	}
 	jsonmsg := gjson.ParseBytes(data).Get("body") //读取json内作品及作者id信息
@@ -136,6 +161,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 
 	pages, err := GetWebpageData(urltail+"/pages", strid)
 	if err != nil {
+		log.Println("get page data error", err)
 		return nil, err
 	}
 	imagejson := gjson.ParseBytes(pages).Get("body").String()
@@ -159,12 +185,12 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 
 	return i, nil
 }
-func GetAuthor(id int64, ss *map[string]gjson.Result) error {
+func GetAuthor(id int64) (map[string]gjson.Result, error) {
 	data, err := GetAuthorWebpage(strconv.FormatInt(id, 10), strconv.FormatInt(id, 10))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	jsonmsg := gjson.ParseBytes(data).Get("body")
-	*ss = jsonmsg.Get("illusts").Map()
-	return nil
+	ss := jsonmsg.Get("illusts").Map()
+	return ss, nil
 }
