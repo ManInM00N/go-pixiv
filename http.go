@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/tidwall/gjson"
 	"github.com/yuin/goldmark/util"
 	"io/ioutil"
@@ -18,10 +19,10 @@ type AgeLimit struct {
 	S string
 }
 
-func (i NotGood) Error() string {
+func (i *NotGood) Error() string {
 	return i.S
 }
-func (i AgeLimit) Error() string {
+func (i *AgeLimit) Error() string {
 	return i.S
 }
 
@@ -134,9 +135,12 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 func work(id int64) (i *Illust, err error) { //按作品id查找
 	urltail := strconv.FormatInt(id, 10)
 	strid := urltail
-	data, err := GetWebpageData(urltail, strid)
-	if err != nil {
-		log.Println("GetWebpageData error", err)
+	err = nil
+	data, err2 := GetWebpageData(urltail, strid)
+
+	if err2 != nil {
+		err = fmt.Errorf("GetWebpageData error %w", err2)
+		log.Println("GetWebpageData error", err2)
 		return nil, err
 	}
 	jsonmsg := gjson.ParseBytes(data).Get("body") //读取json内作品及作者id信息
@@ -158,17 +162,24 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	i.Title = jsonmsg.Get("illustTitle").Str
 	i.UserName = jsonmsg.Get("userName").Str
 	i.Likecount = jsonmsg.Get("likeCount").Int()
-
-	pages, err := GetWebpageData(urltail+"/pages", strid)
-	if err != nil {
-		log.Println("get page data error", err)
+	if i.Likecount < settings.LikeLimit {
+		err = fmt.Errorf("%w", &NotGood{"LikeNotEnough"})
+	}
+	if i.AgeLimit == "r18" && !settings.Agelimit {
+		err = fmt.Errorf("%w", &AgeLimit{"AgeLimitExceed"})
+	}
+	pages, err2 := GetWebpageData(urltail+"/pages", strid)
+	if err2 != nil {
+		err = fmt.Errorf("Get illustpage data error %w", err2)
+		log.Println("get illustpage data error", err2)
 		return nil, err
 	}
 	imagejson := gjson.ParseBytes(pages).Get("body").String()
 	var imagedata []ImageData
-	err = json.Unmarshal(util.StringToReadOnlyBytes(imagejson), &imagedata)
-	if err != nil {
-		log.Println("Error decoding", err)
+	err2 = json.Unmarshal(util.StringToReadOnlyBytes(imagejson), &imagedata)
+	if err2 != nil {
+		err = fmt.Errorf("Error decoding %w", err2)
+		log.Println("Error decoding", err2)
 		return nil, err
 	}
 
@@ -176,14 +187,8 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	for _, image := range imagedata {
 		i.ImageUrl = append(i.ImageUrl, image.URLs.Original)
 	}
-	if i.Likecount < settings.LikeLimit {
-		return i, &NotGood{"LikeNotEnough"}
-	}
-	if i.AgeLimit == "r18" && !settings.Agelimit {
-		return i, &AgeLimit{"AgeLimitExceed"}
-	}
 
-	return i, nil
+	return i, err
 }
 func GetAuthor(id int64) (map[string]gjson.Result, error) {
 	data, err := GetAuthorWebpage(strconv.FormatInt(id, 10), strconv.FormatInt(id, 10))

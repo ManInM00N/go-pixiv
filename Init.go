@@ -49,7 +49,6 @@ var TaskPool *goruntine.GoPool
 
 // var P *ants.Pool
 var P gopool.GoPool
-var satisfy int
 
 func windowInit() {
 	app := app.New()
@@ -89,7 +88,7 @@ func windowInit() {
 				return
 			}
 			log.Println(text + "'s artworks Start download")
-			satisfy = 0
+			satisfy := 0
 			for key, _ := range all {
 				k := key
 				P.AddTask(func() (interface{}, error) {
@@ -114,8 +113,8 @@ func windowInit() {
 				ss := <-c
 				//log.Println(ss, " Download failed Now retrying")
 				P.AddTask(func() (interface{}, error) {
-					if JustDownload(ss, false) {
-						satisfy++
+					if a, b := JustDownload(ss, false); b {
+						satisfy += a
 					}
 					return nil, nil
 				})
@@ -202,11 +201,16 @@ func GetClient() *http.Client {
 		},
 	}
 }
-func JustDownload(pid string, mode bool) bool {
-	illust, _ := work(statics.StringToInt64(pid))
+func JustDownload(pid string, mode bool) (int, bool) {
+	illust, err := work(statics.StringToInt64(pid))
+	if !mode {
+		if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
+			return 0, true
+		}
+	}
 	if illust == nil {
 		log.Println(pid, " Download failed")
-		return false
+		return 0, false
 	}
 	if mode {
 		log.Println(pid + " Start download")
@@ -215,7 +219,7 @@ func JustDownload(pid string, mode bool) bool {
 	if mode {
 		log.Println(pid + " Finished download")
 	}
-	return true
+	return 1, true
 }
 func Get(pid string) {
 
