@@ -3,3 +3,175 @@
 00:14:14 1793569 pushed TaskQueue
 00:14:18 1793569's artworks Start download
 00:19:19 1793569's artworks -> Satisfied and Successfully downloaded illusts:  68 in all:  81
+12:08:50 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+12:09:49 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+12:10:16 458887 pushed TaskQueue
+12:10:17 458887's artworks Start download
+12:12:35 status code  429
+12:12:35 status code  429
+12:12:36 status code  429
+12:12:37 status code  429
+12:12:46 status code  429
+12:12:46 status code  429
+12:12:47 status code  429
+12:12:48 status code  429
+12:12:56 status code  429
+12:12:57 status code  429
+12:12:58 status code  429
+12:12:58 status code  429
+12:13:07 status code  429
+12:13:07 status code  429
+12:13:09 status code  429
+12:13:12 status code  429
+12:13:19 status code  429
+12:13:19 status code  429
+12:13:20 status code  429
+12:13:24 status code  429
+12:13:30 status code  429
+12:13:57 1815304 pushed TaskQueue
+12:15:29 status code  429
+12:15:29 status code  429
+12:15:30 status code  429
+12:15:31 status code  429
+12:15:40 status code  429
+12:15:40 status code  429
+12:15:41 status code  429
+12:15:43 status code  429
+12:15:52 status code  429
+12:15:52 status code  429
+12:15:54 status code  429
+12:15:56 status code  429
+12:16:03 status code  429
+12:16:05 status code  429
+12:16:06 status code  429
+12:16:14 status code  429
+12:16:16 status code  429
+12:16:17 status code  429
+12:16:20 status code  429
+12:16:28 status code  429
+12:16:28 status code  429
+12:16:30 status code  429
+12:16:35 status code  429
+12:16:39 status code  429
+12:16:39 status code  429
+12:17:52 status code  429
+12:17:52 status code  429
+12:17:52 status code  429
+12:17:52 status code  429
+12:18:02 status code  429
+12:18:02 status code  429
+12:18:03 status code  429
+12:18:03 status code  429
+12:18:13 status code  429
+12:18:16 status code  429
+12:18:17 status code  429
+12:18:17 status code  429
+12:18:27 status code  429
+12:18:27 status code  429
+12:18:27 status code  429
+12:18:31 status code  429
+12:18:38 status code  429
+12:18:38 status code  429
+12:18:38 status code  429
+12:18:42 status code  429
+12:18:48 status code  429
+12:18:48 status code  429
+12:18:49 status code  429
+12:18:52 status code  429
+12:18:59 status code  429
+12:18:59 status code  429
+12:19:00 status code  429
+12:19:03 status code  429
+12:19:10 status code  429
+12:19:10 status code  429
+12:19:10 status code  429
+12:19:15 status code  429
+12:19:20 status code  429
+12:19:21 status code  429
+12:19:21 status code  429
+12:19:26 status code  429
+12:19:31 status code  429
+12:19:32 status code  429
+12:19:32 status code  429
+12:19:38 status code  429
+12:19:42 status code  429
+12:19:43 status code  429
+12:19:58 458887's artworks -> Satisfied and Successfully downloaded illusts:  115 in all:  399
+12:19:59 1815304's artworks Start download
+12:25:27 status code  429
+12:25:27 status code  429
+12:25:30 status code  429
+12:25:31 status code  429
+12:25:41 status code  429
+12:25:42 status code  429
+12:25:42 status code  429
+12:25:46 status code  429
+12:33:16 1815304's artworks -> Satisfied and Successfully downloaded illusts:  256 in all:  530
+12:57:45 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+12:58:43 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+12:58:56 1815304 pushed TaskQueue
+12:59:00 1815304's artworks Start download
+13:11:00 17151277 pushed TaskQueue
+13:14:45 1815304's artworks -> Satisfied and Successfully downloaded illusts:  261 in all:  530
+13:14:48 17151277's artworks Start download
+13:26:49 13075529 pushed TaskQueue
+13:26:58 60693818 pushed TaskQueue
+13:27:38 17151277's artworks -> Satisfied and Successfully downloaded illusts:  307 in all:  373
+13:27:38 13075529's artworks Start download
+13:36:33 13075529's artworks -> Satisfied and Successfully downloaded illusts:  121 in all:  238
+13:36:33 60693818's artworks Start download
+13:41:58 60693818's artworks -> Satisfied and Successfully downloaded illusts:  187 in all:  199
+13:49:17 14409210 pushed TaskQueue
+13:49:21 14409210's artworks Start download
+14:02:26 277602 pushed TaskQueue
+14:02:29 8001292 pushed TaskQueue
+14:02:34 760704 pushed TaskQueue
+14:02:40 6334904 pushed TaskQueue
+14:08:32 14409210's artworks -> Satisfied and Successfully downloaded illusts:  394 in all:  408
+14:08:39 277602's artworks Start download
+14:46:31 Request failed  Get "https://www.pixiv.net/ajax/illust/68215433": EOF
+14:46:31 GetWebpageData error Get "https://www.pixiv.net/ajax/illust/68215433": EOF
+15:37:34 277602's artworks -> Satisfied and Successfully downloaded illusts:  708 in all:  1502
+15:37:41 8001292's artworks Start download
+15:46:45 8001292's artworks -> Satisfied and Successfully downloaded illusts:  74 in all:  158
+15:46:45 760704's artworks Start download
+15:51:20 760704's artworks -> Satisfied and Successfully downloaded illusts:  54 in all:  68
+15:51:24 6334904's artworks Start download
+16:03:45 6334904's artworks -> Satisfied and Successfully downloaded illusts:  141 in all:  165
+16:14:51 77617634 pushed TaskQueue
+16:14:55 77617634's artworks Start download
+16:15:03 93072153 pushed TaskQueue
+16:15:37 12406994 pushed TaskQueue
+16:15:42 386925 pushed TaskQueue
+16:26:50 77617634's artworks -> Satisfied and Successfully downloaded illusts:  5 in all:  208
+16:26:50 93072153's artworks Start download
+16:27:48 Request failed  Get "https://www.pixiv.net/ajax/illust/110420781": EOF
+16:27:48 GetWebpageData error Get "https://www.pixiv.net/ajax/illust/110420781": EOF
+16:30:19 93072153's artworks -> Satisfied and Successfully downloaded illusts:  0 in all:  44
+16:30:19 12406994's artworks Start download
+16:48:12 12406994's artworks -> Satisfied and Successfully downloaded illusts:  60 in all:  337
+16:48:16 386925's artworks Start download
+16:53:24 386925's artworks -> Satisfied and Successfully downloaded illusts:  64 in all:  79
+16:55:28 12406994 pushed TaskQueue
+16:55:28 12406994's artworks Start download
+17:11:56 12406994's artworks -> Satisfied and Successfully downloaded illusts:  60 in all:  337
+17:45:33 12406994 pushed TaskQueue
+17:45:34 12406994's artworks Start download
+17:48:22 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+17:48:40 Check settings:http://127.0.0.1:10811 PHPSESSID=26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn D:\personal things\Download
+17:48:53 12406994 pushed TaskQueue
+17:48:54 12406994's artworks Start download
+17:51:01 93072153 pushed TaskQueue
+17:58:07 Request failed  Get "https://www.pixiv.net/ajax/illust/110437781": EOF
+17:58:07 GetWebpageData error Get "https://www.pixiv.net/ajax/illust/110437781": EOF
+17:58:12 status code  429
+17:58:23 status code  429
+18:04:06 status code  429
+18:04:06 status code  429
+18:04:07 status code  429
+18:04:09 status code  429
+18:05:34 12406994's artworks -> Satisfied and Successfully downloaded illusts:  142 in all:  337
+18:05:35 93072153's artworks Start download
+18:06:37 93072153's artworks -> Satisfied and Successfully downloaded illusts:  5 in all:  44
+18:17:32 300306 pushed TaskQueue
+18:17:33 300306's artworks Start download

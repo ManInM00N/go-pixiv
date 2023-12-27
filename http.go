@@ -60,6 +60,11 @@ func GetWebpageData(url, id string) ([]byte, error) { //请求得到作品json
 	for i := 0; i < 10; i++ {
 		response, err = clientcopy.Do(Request)
 		if err == nil {
+			if response.StatusCode == 429 {
+				time.Sleep(10 * time.Second)
+				//i--
+				continue
+			}
 			break
 		}
 		if i == 9 && err != nil {
@@ -107,6 +112,11 @@ func GetAuthorWebpage(url, id string) ([]byte, error) {
 	for i := 0; i < 10; i++ {
 		response, err = clientcopy.Do(Request)
 		if err == nil {
+			if response.StatusCode == 429 {
+				time.Sleep(10 * time.Second)
+				//i--
+				continue
+			}
 			break
 		}
 		if i == 9 && err != nil {
@@ -161,7 +171,7 @@ func work(id int64) (i *Illust, err error) { //按作品id查找
 	i.Pages = jsonmsg.Get("pageCount").Int()
 	i.Title = jsonmsg.Get("illustTitle").Str
 	i.UserName = jsonmsg.Get("userName").Str
-	i.Likecount = jsonmsg.Get("likeCount").Int()
+	i.Likecount = jsonmsg.Get("bookmarkCount").Int()
 	if i.Likecount < settings.LikeLimit {
 		err = fmt.Errorf("%w", &NotGood{"LikeNotEnough"})
 	}
