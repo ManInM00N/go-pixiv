@@ -4,5 +4,5 @@ agelimit: true
 downloadposition: D:\personal things\Download
 likelimit: 3500
 retry429: 10000
-downloadinterval: 500
-retryinterval: 2000
+downloadinterval: 1000
+retryinterval: 3000

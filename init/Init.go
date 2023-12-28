@@ -165,6 +165,10 @@ func WindowInit() {
 	Appwindow.SetIcon(icon)
 	Appwindow.SetContent(all)
 	Appwindow.Resize(fyne.Size{300, 250})
+	//Appwindow.SetCloseIntercept(func() {
+	//
+	//	//app.Quit()
+	//})
 }
 
 func init() {

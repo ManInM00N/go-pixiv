@@ -174,7 +174,6 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 		if response.StatusCode == 429 {
 			time.Sleep(time.Duration(Setting.Retry429) * time.Millisecond)
 		}
-		return nil, &TooFastRequest429{"TooMuchRequest in a short time"}
 	}
 	return webpageBytes, nil
 }
