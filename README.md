@@ -26,6 +26,7 @@ cookie:打开登录后的pixiv网页，在电脑网页按F12，从应用程序�
 r-18:true启用，false禁用   懂得都懂<br>
 minlikelimit:下载图片的点赞数限制 小于的不下载<br>
 downloadposition:图片储存位置，如果目标位置没有文件夹则会改成此目录下的Download文件夹(自动创建)<br>
-queuelimit:下载队列并发数，多出来的阻塞等待<br>
-illustqueuelimit:每张插画的并发数，多出来的阻塞等待<br>
+retry429: 429状态码等待时间<br>
+downloadinterval: 下载间隔时间<br>
+retryinterval: 请求重试间隔<br>
 </p>
