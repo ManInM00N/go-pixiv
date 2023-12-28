@@ -1,6 +1,7 @@
 package main
 
 import (
+	. "main/init"
 	"strconv"
 	"time"
 )
@@ -24,6 +25,8 @@ type Illust struct {
 	UploadedTime    time.Time `db:"uploaded_time"`
 }
 
+var exit chan struct{}
+
 func (i *Illust) msg() string {
 	return strconv.FormatInt(i.Pid, 10) +
 		"\n  " + i.PreviewImageUrl
@@ -31,10 +34,13 @@ func (i *Illust) msg() string {
 }
 
 func main() {
-	LogInit()     //日志打印
-	clinentInit() //服务端请求设置
-	windowInit()  //gui面板
+	windowInit() //gui面板
 	appwindow.ShowAndRun()
-	defer P.Release()
-	defer TaskPool.Close()
+	defer func() {
+		P.Release()
+		TaskPool.Close()
+		SinglePool.Release()
+		//Cancel()
+		IsClosed = true
+	}()
 }

@@ -18,11 +18,11 @@
 <h3>在settings.yml中</h3>
 <p>
 proxy:你本地梯子的代理ip后面的端口，可以从你梯子的配置中得到，这个不会配的话我无能为力,拿v2ray的配置方法举例，端口就是http后面的数字：<br>
-<img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/proxy.png"><br>
+<img src="https://github.com/ManInM00N/go-pixiv/blob/master/assets/proxy.png"><br>
 cookie:打开登录后的pixiv网页，在电脑网页按F12，从应用程序一栏中Cookie的PHPSESSID的值<br>
-<img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/cookie1.png"><br>
-<img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/cookie2.png"><br>
-<img src="https://github.com/ManInM00N/go-pixiv/blob/master/img/cookie3.png"><br>
+<img src="https://github.com/ManInM00N/go-pixiv/blob/master/assets/cookie1.png"><br>
+<img src="https://github.com/ManInM00N/go-pixiv/blob/master/assets/cookie2.png"><br>
+<img src="https://github.com/ManInM00N/go-pixiv/blob/master/assets/cookie3.png"><br>
 r-18:true启用，false禁用   懂得都懂<br>
 minlikelimit:下载图片的点赞数限制 小于的不下载<br>
 downloadposition:图片储存位置，如果目标位置没有文件夹则会改成此目录下的Download文件夹(自动创建)<br>

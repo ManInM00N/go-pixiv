@@ -9,6 +9,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/yuin/goldmark v1.5.5
 	gopkg.in/yaml.v3 v3.0.1
+
 )
 
 require (

@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"github.com/ManInM00N/go-tool/statics"
 	"io"
 	"log"
+	. "main/init"
 	"net/http"
 	url2 "net/url"
 	"os"
@@ -17,7 +19,6 @@ import (
 // TODO: 指针内存问题OK
 // TODO: 图片下载完整  OK
 func (i *Illust) Download() {
-	//var Request = new(http.Request)
 	var err error
 	total := 0
 	Request, err2 := http.NewRequest("GET", i.PreviewImageUrl, nil)
@@ -30,10 +31,10 @@ func (i *Illust) Download() {
 	Request.Header.Set("referer", "https://www.pixiv.net")
 	Cookie := &http.Cookie{
 		Name:  "PHPSESSID",
-		Value: settings.Cookie,
+		Value: Setting.Cookie,
 	}
 	Request.AddCookie(Cookie)
-	Request.Header.Set("PHPSESSID", settings.Cookie)
+	Request.Header.Set("PHPSESSID", Setting.Cookie)
 	//UserID := Int64ToString(i.UserID)
 	var Response *http.Response
 	defer func() {
@@ -41,11 +42,11 @@ func (i *Illust) Download() {
 			Response.Body.Close()
 		}
 	}()
-	_, err = os.Stat(settings.Downloadposition)
+	_, err = os.Stat(Setting.Downloadposition)
 	if err != nil {
-		os.Mkdir(settings.Downloadposition, os.ModePerm)
+		os.Mkdir(Setting.Downloadposition, os.ModePerm)
 	}
-	AuthorFile := settings.Downloadposition + "/" + statics.Int64ToString(i.UserID)
+	AuthorFile := Setting.Downloadposition + "/" + statics.Int64ToString(i.UserID)
 	_, err = os.Stat(AuthorFile)
 	if err != nil {
 		os.Mkdir(AuthorFile, os.ModePerm)
@@ -62,18 +63,17 @@ func (i *Illust) Download() {
 		img, err2 := os.Stat(imagefilepath)
 		if err2 == nil {
 			if img.Size() != 0 {
-				time.Sleep(time.Second * 1)
+				time.Sleep(time.Millisecond * time.Duration(Setting.Downloadinterval))
 				continue
 			}
 		}
-		//w := bufio.NewWriter(img)
+		//w := bufio.NewWriter(assets)
 		Request.URL, _ = url2.Parse(i.ImageUrl[j])
 		ok := true
 		for k := 0; k < 10; k++ {
 			Response, err = clientcopy.Do(Request)
 			if k == 9 && err != nil {
 				log.Println("Illust Resouce Request Error", err, Response.Status)
-				//log.Println("Retry Download", i.ImageUrl[j])
 				ok = false
 				j--
 				failtimes++
@@ -84,7 +84,7 @@ func (i *Illust) Download() {
 			} else if err == nil {
 				break
 			}
-			time.Sleep(time.Second * 1)
+			time.Sleep(time.Millisecond * time.Duration(Setting.Downloadinterval))
 
 		}
 		if !ok {
@@ -97,7 +97,6 @@ func (i *Illust) Download() {
 		if err != nil {
 			log.Println(i.Pid, "Download Failed", err, "retrying")
 			os.Remove(imagefilepath)
-
 			j--
 			continue
 		}
@@ -110,12 +109,30 @@ func (i *Illust) Download() {
 		}
 		bufWriter.Flush()
 		total++
-		time.Sleep(1 * time.Second)
-
+		time.Sleep(time.Millisecond * time.Duration(Setting.Downloadinterval))
 	}
-	time.Sleep(1 * time.Second)
 	//log.Println(i.Pid, "Total pictures:", len(i.ImageUrl), "Actually download", total)
 	return
+}
+func JustDownload(pid string, mode bool) (int, bool) {
+	illust, err := work(statics.StringToInt64(pid), 1)
+	if !mode {
+		if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
+			return 0, true
+		}
+	}
+	if illust == nil {
+		log.Println(pid, " Download failed")
+		return 0, false
+	}
+	if mode {
+		log.Println(pid + " Start download")
+	}
+	illust.Download()
+	if mode {
+		log.Println(pid + " Finished download")
+	}
+	return 1, true
 }
 func GetFileName(path string) string {
 	index := strings.LastIndex(path, "/")

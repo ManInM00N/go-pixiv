@@ -2,38 +2,15 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"github.com/ManInM00N/go-tool/goruntine"
 	"github.com/ManInM00N/go-tool/statics"
-	"github.com/devchat-ai/gopool"
-	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"log"
-	"net/http"
-	url2 "net/url"
-	"os"
-	"time"
+	. "main/init"
 )
-
-type Settings struct {
-	Proxy            string `yml:"proxy"`
-	Cookie           string `yml:"cookie"`
-	Agelimit         bool   `yml:"r-18" `
-	Downloadposition string `yml:"downloadposition"`
-	LikeLimit        int64  `yml:"minlikelimit"`
-	Queuelimit       int    `yml:"queuelimit"`
-	Illustqueuelimit int    `yml:"illustqueuelimit"`
-}
-
-var settings Settings
-
-var appwindow fyne.Window
-var f *os.File
 
 type FyneLogWriter struct {
 	LogText *widget.Entry
@@ -45,18 +22,12 @@ func (w *FyneLogWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-var TaskPool *goruntine.GoPool
-
-// var P *ants.Pool
-var P gopool.GoPool
+var (
+	appwindow fyne.Window
+)
 
 func windowInit() {
 	app := app.New()
-	//defer P.Release()
-	//defer taskpool.Release()
-	TaskPool = goruntine.NewGoPool(200, 1)
-	TaskPool.Run()
-	P = gopool.NewGoPool(4, gopool.WithTaskQueueSize(5000))
 	appwindow = app.NewWindow("GO Pixiv")
 	authorId := widget.NewEntry()
 	illustId := widget.NewEntry()
@@ -65,7 +36,7 @@ func windowInit() {
 	button1 := widget.NewButton("Download", func() {})
 	button1.OnTapped = func() {
 		text := illustId.Text
-		P.AddTask(func() (interface{}, error) {
+		SinglePool.AddTask(func() (interface{}, error) {
 			JustDownload(text, true)
 			return nil, nil
 		})
@@ -79,6 +50,9 @@ func windowInit() {
 		button2.Disabled()
 		log.Println(text + " pushed TaskQueue")
 		TaskPool.Add(func() {
+			if IsClosed {
+				return
+			}
 			c := make(chan string, 2000)
 			all, err := GetAuthor(statics.StringToInt64(text))
 			if err != nil {
@@ -91,10 +65,16 @@ func windowInit() {
 			satisfy := 0
 			for key, _ := range all {
 				k := key
+				if IsClosed {
+					return
+				}
 				P.AddTask(func() (interface{}, error) {
 					//time.Sleep(1 * time.Second)
+					if IsClosed {
+						return nil, nil
+					}
 					temp := k
-					illust, err := work(statics.StringToInt64(temp))
+					illust, err := work(statics.StringToInt64(temp), 1)
 					if err != nil {
 						//log.Println(key, " Download failed")
 						//continue
@@ -110,6 +90,9 @@ func windowInit() {
 			}
 			P.Wait()
 			for len(c) > 0 {
+				if IsClosed {
+					return
+				}
 				ss := <-c
 				//log.Println(ss, " Download failed Now retrying")
 				P.AddTask(func() (interface{}, error) {
@@ -129,98 +112,33 @@ func windowInit() {
 	}
 	r18 := widget.NewCheck("R-18", func(i bool) {
 	})
-	r18.SetChecked(settings.Agelimit)
+	r18.SetChecked(Setting.Agelimit)
 	r18.Refresh()
 	likelimit := widget.NewLabel("likelimit")
 	readlikelimit := widget.NewEntry()
 	cookieLabel := widget.NewLabel("cookie")
 	readcookie := widget.NewEntry()
-	readlikelimit.SetText(statics.Int64ToString(settings.LikeLimit))
-	readcookie.SetText(settings.Cookie)
+	readlikelimit.SetText(statics.Int64ToString(Setting.LikeLimit))
+	readcookie.SetText(Setting.Cookie)
 	readcookie.Refresh()
 	Likelimit := container.New(layout.NewGridWrapLayout(fyne.Size{Width: 100, Height: 38}), likelimit, readlikelimit)
 	Cookie := container.New(layout.NewGridWrapLayout(fyne.Size{Width: 100, Height: 38}), cookieLabel, readcookie)
 	save := widget.NewButton("Save Settings", func() {
-		settings.Agelimit = r18.Checked
+		Setting.Agelimit = r18.Checked
 		to := readlikelimit.Text
 		if !statics.AllNum(to) {
 			to = "0"
 		}
-		settings.LikeLimit = statics.StringToInt64(to)
-		out, _ := yaml.Marshal(&settings)
-		ioutil.WriteFile("settings.yml", out, 0644)
+		Setting.LikeLimit = statics.StringToInt64(to)
+		UpdateSettings()
 	})
 	setting := container.New(layout.NewGridWrapLayout(fyne.Size{Width: 400, Height: 50}), r18, Likelimit, Cookie, save)
 	content := container.New(layout.NewGridLayoutWithColumns(3), illustLabel, illustId, button1, authorLabel, authorId, button2)
 	//stackqueue := container.NewScroll()
 	all := container.NewVBox(content, setting)
-	icon, _ := fyne.LoadResourceFromPath("img/icon.ico")
+	icon, _ := fyne.LoadResourceFromPath("assets/icon.ico")
 	app.SetIcon(icon)
 	appwindow.SetIcon(icon)
 	appwindow.SetContent(all)
 	appwindow.Resize(fyne.Size{300, 250})
-}
-func LogInit() {
-	T := time.Now()
-	logfile := fmt.Sprintf("errorlog/%4d-%2d-%2d.log", T.Year(), T.Month(), T.Day())
-	log.SetFlags(log.Ltime)
-	f, _ = os.OpenFile(logfile, os.O_CREATE|os.O_APPEND|os.O_RDWR, os.ModePerm)
-	log.SetOutput(f)
-
-}
-
-// TODO ：客户端代理设置 OK
-func clinentInit() {
-	jfile, _ := os.OpenFile("settings.yml", os.O_RDWR, 0644)
-	defer jfile.Close()
-	bytevalue, _ := ioutil.ReadAll(jfile)
-	yaml.Unmarshal(bytevalue, &settings)
-	settings.LikeLimit = max(settings.LikeLimit, 0)
-	_, err := os.Stat(settings.Downloadposition)
-	if err != nil {
-		settings.Downloadposition = "Download"
-	}
-	settings.Queuelimit = max(settings.Queuelimit, 1)
-
-	out, _ := yaml.Marshal(&settings)
-	ioutil.WriteFile("settings.yml", out, 0644)
-	_, err = url2.Parse(settings.Proxy)
-	log.Println("Check settings:"+settings.Proxy, "PHPSESSID="+settings.Cookie, settings.Downloadposition)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-}
-func GetClient() *http.Client {
-	proxyURL, _ := url2.Parse(settings.Proxy)
-	return &http.Client{
-		Transport: &http.Transport{
-			Proxy:                 http.ProxyURL(proxyURL),
-			DisableKeepAlives:     true,
-			ResponseHeaderTimeout: time.Second * 5,
-		},
-	}
-}
-func JustDownload(pid string, mode bool) (int, bool) {
-	illust, err := work(statics.StringToInt64(pid))
-	if !mode {
-		if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
-			return 0, true
-		}
-	}
-	if illust == nil {
-		log.Println(pid, " Download failed")
-		return 0, false
-	}
-	if mode {
-		log.Println(pid + " Start download")
-	}
-	illust.Download()
-	if mode {
-		log.Println(pid + " Finished download")
-	}
-	return 1, true
-}
-func Get(pid string) {
-
 }
