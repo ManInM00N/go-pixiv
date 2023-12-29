@@ -149,6 +149,7 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 		response, err = clientcopy.Do(Request)
 		if err == nil {
 			if response.StatusCode == 429 {
+				println("429")
 				time.Sleep(time.Duration(Setting.Retry429) * time.Millisecond)
 				//i--
 				continue

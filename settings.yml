@@ -3,12 +3,6 @@ cookie: 26338360_GcWBehXuXXANIW5pBnt0Eh1b9EqK6Zvn
 agelimit: true
 downloadposition: D:\personal things\Download
 likelimit: 3500
-
-# ms(毫秒) & > 1000(After revision)
 retry429: 10000
-
-# ms(毫秒) & > 200(After revision)
 downloadinterval: 500
-
-# ms(毫秒) & > 200(After revision)
-retryinterval: 2000
+retryinterval: 1000
