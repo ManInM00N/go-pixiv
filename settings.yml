@@ -5,4 +5,4 @@ downloadposition: D:\personal things\Download
 likelimit: 3500
 retry429: 10000
 downloadinterval: 500
-retryinterval: 1000
+retryinterval: 2000

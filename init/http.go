@@ -75,7 +75,7 @@ func Download(i *Illust) {
 		for k := 0; k < 10; k++ {
 			Response, err = clientcopy.Do(Request)
 			if k == 9 && err != nil {
-				DebugLog.Println("Illust Resouce Request Error", err, Response.Status)
+				DebugLog.Println("Illust Resouce Request Error", err)
 				ok = false
 				j--
 				failtimes++
@@ -175,7 +175,8 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 		if response.StatusCode == 429 {
 			time.Sleep(time.Duration(Setting.Retry429) * time.Millisecond)
 		}
-		return nil, &TooFastRequest{S: "TooMuchRequest in a short period"}
+		return nil, &TooFastRequest{S: "TooMuchRequest in a short period", Err: errors.New("TooMuchRequest")}
+
 	}
 	return webpageBytes, nil
 }
@@ -213,10 +214,10 @@ func work(id int64, mode int) (i *Illust, err error) { //按作品id查找
 		}
 	}
 	if i.Likecount < Setting.LikeLimit {
-		err = fmt.Errorf("%w", &NotGood{S: "LikeNotEnough"})
+		err = fmt.Errorf("%w", &NotGood{S: "LikeNotEnough", Err: errors.New("LikeNotEnough")})
 	}
 	if i.AgeLimit == "r18" && !Setting.Agelimit {
-		err = fmt.Errorf("%w", &AgeLimit{S: "AgeLimitExceed"})
+		err = fmt.Errorf("%w", &AgeLimit{S: "AgeLimitExceed", Err: errors.New("AgeLimitExceed")})
 	}
 	pages, err2 := GetWebpageData(urltail+"/pages", strid, mode)
 	if err2 != nil {
@@ -252,7 +253,7 @@ func GetAuthor(id int64) (map[string]gjson.Result, error) {
 func JustDownload(pid string, mode bool) (int, bool) {
 	illust, err := work(statics.StringToInt64(pid), 1)
 	if !mode {
-		if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
+		if ContainMyerror(err) {
 			return 0, true
 		}
 	}

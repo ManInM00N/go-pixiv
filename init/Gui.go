@@ -1,7 +1,6 @@
 package init
 
 import (
-	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -78,6 +77,12 @@ func WindowInit() {
 			waitingtasks--
 			if err != nil {
 				DebugLog.Println("Error getting author", err)
+				if waitingtasks > 0 {
+					waitingtasksLabel.SetText("There are " + fmt.Sprintf("%d", waitingtasks) + " waiting tasks")
+				} else {
+					waitingtasksLabel.SetText("There is no tasks waiting")
+				}
+				waitingtasksLabel.Refresh()
 				return
 			}
 			if waitingtasks > 0 {
@@ -106,9 +111,8 @@ func WindowInit() {
 					temp := k
 					illust, err := work(statics.StringToInt64(temp), 1)
 					if err != nil {
-						//log.Println(key, " Download failed")
 						//continue
-						if !errors.Is(err, &NotGood{}) && !errors.Is(err, &AgeLimit{}) {
+						if !ContainMyerror(err) {
 							c <- temp
 						}
 						process.Value++
@@ -127,6 +131,7 @@ func WindowInit() {
 			P.Wait()
 			TasknameLabel.SetText("Now Recheck " + text)
 			TasknameLabel.Refresh()
+			println(len(c), " ", satisfy)
 			for len(c) > 0 {
 				if IsClosed {
 					return
@@ -144,6 +149,7 @@ func WindowInit() {
 			InfoLog.Println(text+"'s artworks -> Satisfied and Successfully downloaded illusts: ", satisfy, "in all: ", len(all))
 			satisfy = 0
 			close(c)
+			TasknameLabel.SetText("No Task in queue")
 			process.SetValue(0)
 			process.Refresh()
 		})
