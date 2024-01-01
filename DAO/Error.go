@@ -64,6 +64,6 @@ func (gf *girlfriend) Like() {
 	println("好きです")
 }
 func NewGirlfriend() {
-	zyh := new(girlfriend)
-	zyh.Like()
+	girl := new(girlfriend)
+	girl.Like()
 }

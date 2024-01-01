@@ -2,6 +2,7 @@ package init
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/yuin/goldmark/util"
 	"io"
-	"io/ioutil"
 	. "main/DAO"
 	"net/http"
 	url2 "net/url"
@@ -22,7 +22,7 @@ import (
 // TODO: 基础下载 OK   目录管理下载 OK  主要图片全部下载OK    并发下载OK
 // TODO: 指针内存问题OK
 // TODO: 图片下载完整  OK
-func Download(i *Illust) {
+func Download(i *Illust, op *Option) {
 	var err error
 	total := 0
 	Request, err2 := http.NewRequest("GET", i.PreviewImageUrl, nil)
@@ -48,13 +48,26 @@ func Download(i *Illust) {
 	_, err = os.Stat(Setting.Downloadposition)
 	if err != nil {
 		os.Mkdir(Setting.Downloadposition, os.ModePerm)
+
 	}
-	AuthorFile := Setting.Downloadposition + "/" + statics.Int64ToString(i.UserID)
-	_, err = os.Stat(AuthorFile)
-	if err != nil {
-		os.Mkdir(AuthorFile, os.ModePerm)
+	Path := Setting.Downloadposition
+	if op.Mode == ByRank {
+		Path = Path + "/" + op.Rank + op.RankDate
+		_, err = os.Stat(Path)
+		if err != nil {
+			os.Mkdir(Path, os.ModePerm)
+		}
 	}
-	Type := AuthorFile + "/" + i.AgeLimit
+	if op.DiffAuthor {
+		Path = Path + "/" + statics.Int64ToString(i.UserID)
+		_, err = os.Stat(Path)
+		if err != nil {
+			os.Mkdir(Path, os.ModePerm)
+		}
+		//Path = AuthorFile
+	}
+
+	Type := Path + "/" + i.AgeLimit
 	_, err = os.Stat(Type)
 	if err != nil {
 		os.Mkdir(Type, os.ModePerm)
@@ -118,8 +131,8 @@ func CheckMode(url, id string, num int) (string, string) {
 		return "https://www.pixiv.net/ajax/illust/" + url, "https://www.pixiv.net/artworks/" + id
 	} else if num == 2 { // author page
 		return "https://www.pixiv.net/ajax/user/" + url + "/profile/all", "https://www.pixiv.net/member.php?id=" + id
-	} else if num == 3 {
-
+	} else if num == 4 { //ranking page
+		return url, "https://www.pixiv.net/"
 	}
 	return "", ""
 }
@@ -129,14 +142,15 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 
 	var response *http.Response
 	var err error
-	s1, s2 := CheckMode(url, id, num)
-	Request, err := http.NewRequest("GET", s1, nil)
+	ur, ref := CheckMode(url, id, num)
+	//println(ur, ref)
+	Request, err := http.NewRequest("GET", ur, nil)
 	if err != nil {
 		DebugLog.Println("Error creating request", err)
 		return nil, err
 	}
 	Request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
-	Request.Header.Set("referer", s2)
+	Request.Header.Set("referer", ref)
 	Cookie := &http.Cookie{
 		Name:  "PHPSESSID",
 		Value: Setting.Cookie,
@@ -165,17 +179,21 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 	}
 	defer response.Body.Close()
 
-	webpageBytes, err3 := ioutil.ReadAll(response.Body)
+	//webpageBytes, err3 := ioutil.ReadAll(response.Body)
+	var buffer bytes.Buffer
+	reader := bufio.NewReader(response.Body)
+	_, err3 := io.Copy(&buffer, reader)
+	webpageBytes := buffer.Bytes()
 	if err3 != nil {
 		DebugLog.Println("read failed", err3)
 		return nil, err3
 	}
 	if response.StatusCode != http.StatusOK {
-		DebugLog.Println("status code ", response.StatusCode)
+		DebugLog.Println(id, "status code ", response.StatusCode)
 		if response.StatusCode == 429 {
 			time.Sleep(time.Duration(Setting.Retry429) * time.Millisecond)
+			return nil, &TooFastRequest{S: "TooMuchRequest in a short period", Err: errors.New("TooMuchRequest")}
 		}
-		return nil, &TooFastRequest{S: "TooMuchRequest in a short period", Err: errors.New("TooMuchRequest")}
 
 	}
 	return webpageBytes, nil
@@ -183,18 +201,25 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 
 // TODO: 作品信息json请求   OK
 // TODO: 多页下载 OK
-func work(id int64, mode int) (i *Illust, err error) { //按作品id查找
+func work(id int64, mode *Option) (i *Illust, err error) { //按作品id查找
 	urltail := strconv.FormatInt(id, 10)
 	strid := urltail
 	err = nil
-	data, err2 := GetWebpageData(urltail, strid, mode)
+	data, err2 := GetWebpageData(urltail, strid, 1)
 
 	if err2 != nil {
 		err = fmt.Errorf("GetWebpageData error %w", err2)
 		DebugLog.Println("GetWebpageData error", err2)
 		return nil, err
 	}
+	Results := gjson.ParseBytes(data)
+	canbedownload := Results.Get("error").Bool()
+	if canbedownload {
+		//println(strid, len(strid))
+		return nil, &NotGood{}
+	}
 	jsonmsg := gjson.ParseBytes(data).Get("body") //读取json内作品及作者id信息
+	//println(id, jsonmsg.Str)
 	i = &Illust{
 		AgeLimit:    "all-age",
 		Pid:         jsonmsg.Get("illustId").Int(),
@@ -219,7 +244,7 @@ func work(id int64, mode int) (i *Illust, err error) { //按作品id查找
 	if i.AgeLimit == "r18" && !Setting.Agelimit {
 		err = fmt.Errorf("%w", &AgeLimit{S: "AgeLimitExceed", Err: errors.New("AgeLimitExceed")})
 	}
-	pages, err2 := GetWebpageData(urltail+"/pages", strid, mode)
+	pages, err2 := GetWebpageData(urltail+"/pages", strid, 1)
 	if err2 != nil {
 		err = fmt.Errorf("Get illustpage data error %w", err2)
 		DebugLog.Println("get illustpage data error", err2)
@@ -250,22 +275,31 @@ func GetAuthor(id int64) (map[string]gjson.Result, error) {
 	ss := jsonmsg.Get("illusts").Map()
 	return ss, nil
 }
-func JustDownload(pid string, mode bool) (int, bool) {
-	illust, err := work(statics.StringToInt64(pid), 1)
-	if !mode {
-		if ContainMyerror(err) {
-			return 0, true
-		}
+func GetRank(option *Option) ([]gjson.Result, error) {
+	option.Msg()
+	//println("https://www.pixiv.net/ranking.php?format=json" + option.Suffix)
+	data, err := GetWebpageData("https://www.pixiv.net/ranking.php?format=json"+option.Suffix, "", 4)
+	if err != nil {
+		//println("get failed: ", err.Error())
+		return nil, err
+	}
+	arr := gjson.ParseBytes(data).Get("contents.#.illust_id").Array()
+	return arr, nil
+}
+func JustDownload(pid string, mode *Option) (int, bool) {
+	illust, err := work(statics.StringToInt64(pid), mode)
+	if ContainMyerror(err) {
+		return 0, true
 	}
 	if illust == nil {
 		DebugLog.Println(pid, " Download failed")
 		return 0, false
 	}
-	if mode {
+	if mode.ShowSingle {
 		InfoLog.Println(pid + " Start download")
 	}
-	Download(illust)
-	if mode {
+	Download(illust, mode)
+	if mode.ShowSingle {
 		InfoLog.Println(pid + " Finished download")
 	}
 	return 1, true
