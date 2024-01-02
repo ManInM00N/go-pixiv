@@ -189,7 +189,7 @@ func GetWebpageData(url, id string, num int) ([]byte, error) { //请求得到作
 		return nil, err3
 	}
 	if response.StatusCode != http.StatusOK {
-		DebugLog.Println(id, "status code ", response.StatusCode)
+		DebugLog.Println(id, "status code ", response.StatusCode, ur)
 		if response.StatusCode == 429 {
 			time.Sleep(time.Duration(Setting.Retry429) * time.Millisecond)
 			return nil, &TooFastRequest{S: "TooMuchRequest in a short period", Err: errors.New("TooMuchRequest")}
@@ -238,10 +238,10 @@ func work(id int64, mode *Option) (i *Illust, err error) { //按作品id查找
 			break
 		}
 	}
-	if i.Likecount < Setting.LikeLimit {
+	if i.Likecount < mode.Likelimit {
 		err = fmt.Errorf("%w", &NotGood{S: "LikeNotEnough", Err: errors.New("LikeNotEnough")})
 	}
-	if i.AgeLimit == "r18" && !Setting.Agelimit {
+	if i.AgeLimit == "r18" && !mode.R18 {
 		err = fmt.Errorf("%w", &AgeLimit{S: "AgeLimitExceed", Err: errors.New("AgeLimitExceed")})
 	}
 	pages, err2 := GetWebpageData(urltail+"/pages", strid, 1)
