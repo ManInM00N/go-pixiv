@@ -95,7 +95,7 @@ func WindowInit() {
 			process.Value = 0
 			InfoLog.Println(text + "'s artworks Start download")
 			satisfy := 0
-			options := NewOption(WithMode(ByPid), WithR18(Setting.Agelimit), WithLikeLimit(Setting.LikeLimit))
+			options := NewOption(WithMode(ByAuthor), WithR18(Setting.Agelimit), WithLikeLimit(Setting.LikeLimit))
 
 			for key, _ := range all {
 				k := key
@@ -162,6 +162,7 @@ func WindowInit() {
 
 	}
 	date := widget.NewEntry()
+	date.PlaceHolder = "rank date"
 	choices := widget.NewSelect([]string{"daily", "weekly", "monthly", "male", "female", "rookie", "original", "daily_r18", "weekly_r18", "male_r18", "female_r18"}, func(string) {
 	})
 	choices.SetSelectedIndex(7)
@@ -183,6 +184,7 @@ func WindowInit() {
 				dd := date.Text
 				modett := int64(choices.SelectedIndex())
 				var op *Option
+
 				if len(dd) != 8 {
 					op = NewOption(WithType(0), WithRankmode(modett), WithDate(fmt.Sprintf("%04d%02d%02d", tt.Year(), tt.Month(), tt.Day())), WithR18(true), WithLikeLimit(Setting.LikeLimit), WithPage(strconv.FormatInt(page, 10)))
 
@@ -218,7 +220,7 @@ func WindowInit() {
 				process.Value = 0
 				InfoLog.Println(op.RankDate + " " + op.Rank + "'s artworks Start download")
 				satisfy := 0
-				options := NewOption(WithMode(ByAuthor), WithR18(Setting.Agelimit), WithLikeLimit(Setting.LikeLimit), WithDiffAuthor(false), WithDate(op.RankDate))
+				options := NewOption(WithMode(ByAuthor), WithR18(Setting.Agelimit), WithLikeLimit(Setting.LikeLimit), WithDiffAuthor(false), WithDate(op.RankDate), WithRankmode(modett))
 				for _, key := range all {
 					k := key
 					if IsClosed {

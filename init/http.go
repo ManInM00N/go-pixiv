@@ -78,7 +78,9 @@ func Download(i *Illust, op *Option) {
 		imagefilepath := Type + "/" + imagefilename
 		img, err2 := os.Stat(imagefilepath)
 		if err2 == nil {
-			if img.Size() != 0 {
+			if op.Mode == ByPid {
+				os.Remove(imagefilepath)
+			} else if img.Size() != 0 {
 				time.Sleep(time.Millisecond * time.Duration(Setting.Downloadinterval))
 				continue
 			}
