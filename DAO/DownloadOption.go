@@ -69,7 +69,8 @@ func WithShowSingle(show bool) option {
 }
 func WithMode(mode int64) option {
 	return func(o *Option) {
-		o.Mode = int64(1) << mode
+		o.Mode = mode
+		//	int64(1) <<
 	}
 }
 
